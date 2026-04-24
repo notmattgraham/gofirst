@@ -103,11 +103,18 @@
   }
 
   .brand {
-    font-size: 22px;
-    font-weight: 700;
-    letter-spacing: -0.01em;
+    display: inline-flex;
+    align-items: center;
   }
-  .brand .dot { color: var(--accent); }
+  .brand img {
+    height: 22px;
+    width: auto;
+    display: block;
+  }
+  /* Logo asset is white — invert it in light mode so it stays visible on the white bg. */
+  @media (prefers-color-scheme: light) {
+    .brand img { filter: invert(1); }
+  }
 
   .top-action {
     height: 36px;
@@ -664,12 +671,18 @@
   .splash[hidden] { display: none; }
 
   .splash-brand {
-    font-size: 44px;
-    font-weight: 800;
-    letter-spacing: -0.02em;
     margin-bottom: 12px;
+    display: flex;
+    justify-content: center;
   }
-  .splash-brand .dot { color: var(--accent); }
+  .splash-brand img {
+    height: 48px;
+    width: auto;
+    display: block;
+  }
+  @media (prefers-color-scheme: light) {
+    .splash-brand img { filter: invert(1); }
+  }
 
   .splash-tag {
     color: var(--text-dim);
@@ -819,7 +832,7 @@
 <body>
   <div class="app">
     <header class="top">
-      <div class="brand">GoFirst<span class="dot">.</span></div>
+      <div class="brand"><img src="applogo.svg" alt="GoFirst" /></div>
       <div class="top-user">
         <button class="top-action" id="top-action" hidden></button>
         <button class="avatar-btn" id="avatar-btn" hidden aria-label="Account menu">?</button>
@@ -951,7 +964,7 @@
 
     <!-- Sign-in splash (covers the app when signed out) -->
     <div class="splash" id="splash" hidden>
-      <div class="splash-brand">GoFirst<span class="dot">.</span></div>
+      <div class="splash-brand"><img src="applogo.svg" alt="GoFirst" /></div>
       <div class="splash-tag">Your tasks and streaks, synced across your devices.</div>
       <a class="btn-google" id="btn-google" href="/api/auth/google">
         <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
