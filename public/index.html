@@ -22,9 +22,12 @@
     --text: #e7e9ee;
     --text-dim: #8a909c;
     --text-faint: #5a5f6a;
-    --accent: #6366f1;
-    --accent-hover: #4f46e5;
-    --accent-dim: rgba(99, 102, 241, 0.18);
+    /* Brand palette is pure black/white for now — a single accent color
+       will replace --accent later once chosen. */
+    --accent: #ffffff;
+    --accent-hover: #d4d7dd;
+    --accent-dim: rgba(255, 255, 255, 0.10);
+    --accent-fg: #0f1115; /* text color shown ON top of --accent */
     --danger: #ef4444;
     --success: #10b981;
     --warn: #f59e0b;
@@ -33,7 +36,7 @@
     --tap: 44px;
     --safe-top: env(safe-area-inset-top, 0px);
     --safe-bottom: env(safe-area-inset-bottom, 0px);
-    --nav-h: 64px;
+    --nav-h: 56px;
   }
 
   @media (prefers-color-scheme: light) {
@@ -46,9 +49,10 @@
       --text: #1a1d25;
       --text-dim: #6b7280;
       --text-faint: #9ca3af;
-      --accent: #6366f1;
-      --accent-hover: #4f46e5;
-      --accent-dim: rgba(99, 102, 241, 0.12);
+      --accent: #1a1d25;
+      --accent-hover: #000000;
+      --accent-dim: rgba(26, 29, 37, 0.08);
+      --accent-fg: #ffffff;
       --danger: #dc2626;
       --success: #059669;
       --warn: #d97706;
@@ -150,6 +154,57 @@
   }
   .section-title:first-child { margin-top: 4px; }
 
+  /* Execution-rate stat card at the top of the To Do view */
+  .stat-strip {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 16px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    margin: 4px 0 4px;
+  }
+  .stat-strip[hidden] { display: none; }
+  .stat-ring {
+    flex-shrink: 0;
+    width: 54px;
+    height: 54px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text);
+    position: relative;
+  }
+  .stat-ring::before {
+    content: "";
+    position: absolute;
+    inset: 4px;
+    border-radius: 50%;
+    background: var(--surface);
+  }
+  .stat-ring span {
+    position: relative;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text);
+  }
+  .stat-body {
+    flex: 1;
+    min-width: 0;
+  }
+  .stat-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+  }
+  .stat-sub {
+    font-size: 12px;
+    color: var(--text-dim);
+    margin-top: 2px;
+  }
+
   /* --- Cards & list rows --------------------------------------- */
   .card {
     background: var(--surface);
@@ -233,8 +288,8 @@
     font-weight: 600;
   }
   .badge.habit {
-    background: var(--accent-dim);
-    color: var(--accent);
+    background: var(--text);
+    color: var(--bg);
   }
 
   .row-meta {
@@ -301,12 +356,14 @@
     letter-spacing: 0.04em;
     padding: 4px 9px;
     border-radius: 999px;
-    background: var(--accent-dim);
-    color: var(--accent);
+    background: var(--surface-2);
+    color: var(--text-dim);
+    border: 1px solid var(--border);
   }
   .streak-tag.quit {
-    background: rgba(245, 158, 11, 0.15);
-    color: var(--warn);
+    background: var(--surface-2);
+    color: var(--text);
+    border-color: var(--border);
   }
 
   .streak-num {
@@ -362,7 +419,7 @@
   .action-btn.primary {
     background: var(--accent);
     border-color: var(--accent);
-    color: white;
+    color: var(--accent-fg);
   }
   .action-btn.primary:active { background: var(--accent-hover); }
 
@@ -583,7 +640,7 @@
     border: none;
     border-radius: 12px;
     background: var(--accent);
-    color: white;
+    color: var(--accent-fg);
     font-size: 24px;
     font-weight: 500;
     cursor: pointer;
@@ -620,10 +677,12 @@
   }
 
   /* --- Bottom tab bar ----------------------------------------- */
+  /* Tab content centres vertically within (nav + safe) and the safe-area
+     padding sits below the icons, so the bar hugs the home indicator
+     instead of floating far above it. */
   .tabbar {
     flex-shrink: 0;
     height: calc(var(--nav-h) + var(--safe-bottom));
-    padding-bottom: var(--safe-bottom);
     background: var(--bg-elev);
     border-top: 1px solid var(--border);
     display: flex;
@@ -640,13 +699,13 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 3px;
+    gap: 2px;
     cursor: pointer;
-    padding-top: 4px;
+    padding: 4px 0 calc(var(--safe-bottom) * 0.35);
   }
   .tab svg {
-    width: 24px;
-    height: 24px;
+    width: 22px;
+    height: 22px;
     stroke: currentColor;
     fill: none;
     stroke-width: 2;
@@ -807,7 +866,7 @@
     padding: 8px 14px;
     border-radius: 999px;
     background: var(--accent);
-    color: white;
+    color: var(--accent-fg);
     font-size: 13px;
     font-weight: 600;
     box-shadow: 0 6px 20px rgba(0,0,0,0.25);
@@ -850,6 +909,17 @@
     <main class="main" id="main">
       <!-- To Do List view -->
       <section id="view-todo" class="view active">
+        <div class="stat-strip" id="stat-strip" hidden>
+          <div class="stat-ring" id="stat-ring"
+               style="background: conic-gradient(var(--accent) 0deg, var(--surface-2) 0deg);">
+            <span id="stat-ring-pct">0%</span>
+          </div>
+          <div class="stat-body">
+            <div class="stat-title" id="stat-title">Today's execution</div>
+            <div class="stat-sub" id="stat-sub">0 of 0 complete</div>
+          </div>
+        </div>
+
         <div id="habits-wrap" hidden>
           <div class="section-title">Today's habits</div>
           <div class="card"><ul class="list" id="habits-list"></ul></div>
@@ -1584,8 +1654,34 @@ function setTab(name) {
 }
 
 /* ---- Rendering ---- */
+function renderStatStrip(state) {
+  // Execution rate = (tasks done today) / (tasks scheduled today), for today's list.
+  // Includes one-shot tasks, recurring tasks scheduled today (tracked or not).
+  const eligible = state.tasks.filter(t => scheduledToday(t));
+  // One-shots whose `done` has been true for a while but weren't created today
+  // shouldn't inflate "today's" rate — only count pending + same-day done.
+  // Simpler rule: count all currently-visible tasks; done = isDoneToday(t).
+  const total = eligible.length;
+  const done = eligible.filter(t => isDoneToday(t)).length;
+  const strip = document.getElementById('stat-strip');
+  const ring = document.getElementById('stat-ring');
+  const pct = document.getElementById('stat-ring-pct');
+  const sub = document.getElementById('stat-sub');
+  if (total === 0) {
+    strip.hidden = true;
+    return;
+  }
+  strip.hidden = false;
+  const rate = Math.round((done / total) * 100);
+  ring.style.background = `conic-gradient(var(--accent) ${rate * 3.6}deg, var(--surface-2) 0deg)`;
+  pct.textContent = rate + '%';
+  sub.textContent = `${done} of ${total} complete`;
+}
+
 function renderTasksView(state) {
   const today = todayISO();
+
+  renderStatStrip(state);
 
   // Tracked habits that are scheduled today (daily = always)
   const habits = state.tasks.filter(t =>
@@ -1916,6 +2012,34 @@ setInterval(() => {
 
 // Wire store → view
 Store.subscribe(render);
+
+// --- Swipe between tabs on the main content area ---
+// Horizontal swipe left/right switches to the neighbouring tab. We only fire
+// when the gesture is clearly horizontal (dx dominates dy) and under 500ms so
+// vertical scrolls and long drags don't get mistaken for tab changes.
+(() => {
+  const TABS = ['todo', 'streaks'];
+  let start = null;
+  els.main.addEventListener('touchstart', (e) => {
+    if (e.touches.length !== 1) { start = null; return; }
+    const t = e.touches[0];
+    start = { x: t.clientX, y: t.clientY, at: Date.now() };
+  }, { passive: true });
+  els.main.addEventListener('touchend', (e) => {
+    if (!start) return;
+    const t = e.changedTouches[0];
+    const dx = t.clientX - start.x;
+    const dy = t.clientY - start.y;
+    const dt = Date.now() - start.at;
+    start = null;
+    if (dt > 500) return;
+    if (Math.abs(dx) < 60) return;
+    if (Math.abs(dy) > Math.abs(dx) * 0.6) return;
+    const idx = TABS.indexOf(currentTab);
+    if (dx < 0 && idx < TABS.length - 1) setTab(TABS[idx + 1]);
+    else if (dx > 0 && idx > 0) setTab(TABS[idx - 1]);
+  }, { passive: true });
+})();
 
 // Init UI (empty state until boot() populates)
 setTab('todo');
