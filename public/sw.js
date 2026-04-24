@@ -38,6 +38,10 @@ self.addEventListener('fetch', (event) => {
   const req = event.request;
   if (req.method !== 'GET') return;
 
+  const url = new URL(req.url);
+  // API and OAuth traffic must go straight to the network — never cache.
+  if (url.pathname.startsWith('/api/')) return;
+
   event.respondWith(
     fetch(req)
       .then((res) => {

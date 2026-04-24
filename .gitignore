@@ -3,3 +3,11 @@ node_modules/
 .vscode/
 .idea/
 *.log
+
+# Env and secrets — never commit
+.env
+.env.local
+.env.*.local
+
+# Prisma generated client
+prisma/generated/

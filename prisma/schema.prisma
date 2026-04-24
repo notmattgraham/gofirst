@@ -1,0 +1,59 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id          String       @id @default(cuid())
+  googleId    String       @unique
+  email       String       @unique
+  name        String?
+  picture     String?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  tasks       Task[]
+  quitStreaks QuitStreak[]
+}
+
+model Task {
+  id              String   @id @default(cuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  text            String
+  // Local-time datetime string (YYYY-MM-DDTHH:MM), used for "Since {date}" display.
+  startedAt       String
+  // Null = one-shot task. Else { type: 'daily' | 'weekly' | 'custom', daysOfWeek: number[] }.
+  recurrence      Json?
+  // Only meaningful when recurrence.type === 'daily'. If true, shows on Streaks tab.
+  trackStreak     Boolean  @default(false)
+  // For one-shot tasks only (recurrence === null).
+  done            Boolean  @default(false)
+  // For recurring tasks: local-date strings (YYYY-MM-DD) the task was completed on.
+  completedDates  String[] @default([])
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([userId])
+}
+
+model QuitStreak {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  name      String
+  // Local-time datetime string (YYYY-MM-DDTHH:MM).
+  startAt   String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+}
