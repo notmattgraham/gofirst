@@ -216,6 +216,75 @@
   }
   .section-title:first-child { margin-top: 4px; }
 
+  /* Today / Tomorrow toggle at the top of the To Do tab */
+  .day-toggle {
+    display: inline-flex;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 3px;
+    margin: 4px 0 12px;
+    align-self: flex-start;
+  }
+  .day-chip {
+    padding: 6px 16px;
+    border: none;
+    background: transparent;
+    color: var(--text-dim);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    border-radius: 999px;
+    min-height: 32px;
+  }
+  .day-chip.selected {
+    background: var(--accent);
+    color: var(--accent-fg);
+  }
+  .day-chip:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+
+  /* Lock state banner */
+  .lock-banner {
+    padding: 10px 14px;
+    border-radius: 12px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    margin-bottom: 12px;
+    font-size: 13px;
+    color: var(--text-dim);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .lock-banner[hidden] { display: none; }
+  .lock-banner .lock-icon {
+    font-size: 16px;
+  }
+
+  /* Missed-task row variant */
+  .row-missed {
+    opacity: 0.85;
+  }
+  .row-missed .row-text {
+    color: var(--text);
+  }
+  .row-retry {
+    flex-shrink: 0;
+    padding: 6px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--surface-2);
+    color: var(--text);
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    min-height: 32px;
+  }
+  .row-retry:active { background: var(--border); }
+
   /* Execution-rate stat card at the top of the To Do view */
   .stat-strip {
     display: flex;
@@ -1209,6 +1278,13 @@
       <div class="view-slider" id="view-slider">
       <!-- To Do List view -->
       <section id="view-todo" class="view">
+        <div class="day-toggle" id="day-toggle">
+          <button type="button" class="day-chip selected" data-day="today">Today</button>
+          <button type="button" class="day-chip" data-day="tomorrow">Tomorrow</button>
+        </div>
+
+        <div class="lock-banner" id="lock-banner" hidden></div>
+
         <div class="stat-strip" id="stat-strip" hidden>
           <div class="stat-ring" id="stat-ring"
                style="background: conic-gradient(var(--accent) 0deg, var(--surface-2) 0deg);">
@@ -1225,12 +1301,12 @@
           <div class="card"><ul class="list" id="habits-list"></ul></div>
         </div>
 
-        <div class="section-title">Tasks</div>
+        <div class="section-title" id="tasks-title">Tasks</div>
         <div class="card">
           <ul class="list" id="tasks-list"></ul>
           <div class="empty" id="tasks-empty">
             <div class="empty-title">Nothing on the list</div>
-            <div>Add a task below to get moving.</div>
+            <div id="tasks-empty-sub">Add a task below to get moving.</div>
           </div>
         </div>
       </section>
@@ -1342,6 +1418,26 @@
               <div class="setting-sub">JPG/PNG — downscaled to 256×256 automatically.</div>
             </div>
             <button class="action-btn ghost setting-btn" id="edit-avatar-btn">Change</button>
+          </div>
+        </div>
+
+        <div class="section-title">Overrides</div>
+        <div class="card">
+          <div class="setting-row">
+            <div class="setting-copy">
+              <div class="setting-title" id="override-title">3 overrides left this month</div>
+              <div class="setting-sub" id="override-sub">Use one to unlock today's list when you missed planning the night before.</div>
+            </div>
+            <button class="action-btn primary setting-btn" id="use-override">Use</button>
+          </div>
+        </div>
+
+        <div class="section-title">Missed tasks</div>
+        <div class="card" id="missed-card">
+          <ul class="list" id="missed-list"></ul>
+          <div class="empty" id="missed-empty">
+            <div class="empty-title">Nothing missed</div>
+            <div>Anything you don't check off by midnight lands here.</div>
           </div>
         </div>
 
@@ -1558,6 +1654,17 @@ const Auth = {
       this.user = null;
     }
     this.loading = false;
+    // Push the browser's timezone to the server so lock math uses the
+    // user's local midnight. Only syncs when the stored value drifts.
+    if (this.user) {
+      try {
+        const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        if (tz && tz !== this.user.timezone) {
+          const { user } = await api('PATCH', '/api/auth/me', { timezone: tz });
+          this.user = user;
+        }
+      } catch {}
+    }
     return this.user;
   },
 
@@ -1573,7 +1680,7 @@ const Auth = {
   },
 
   isDev() {
-    return !!(this.user && this.user.email === 'mattgraham15@gmail.com');
+    return !!(this.user && (this.user.isDev || this.user.email === 'mattgraham15@gmail.com'));
   },
 };
 
@@ -1692,16 +1799,37 @@ function quitElapsed(startAt) {
    if the server rejects. The UI is never blocked by network.
    ============================================================ */
 const Store = (() => {
-  let state = { tasks: [], streaks: [] };
+  let state = {
+    tasks: [],
+    streaks: [],
+    missed: [],
+    overrides: { used: 0, remaining: 3, active: false },
+    today: todayISO(),
+    tomorrow: addDaysISO(todayISO(), 1),
+    todayComplete: true, // if there are no tasks, today is vacuously complete
+    overrideActive: false,
+  };
   const listeners = new Set();
   const emit = () => listeners.forEach(fn => fn(state));
 
   async function load() {
-    const [t, s] = await Promise.all([
+    const [t, s, m, o] = await Promise.all([
       api('GET', '/api/tasks'),
       api('GET', '/api/streaks'),
+      api('GET', '/api/tasks/missed').catch(() => ({ missed: [] })),
+      api('GET', '/api/overrides').catch(() => ({ overrides: state.overrides })),
     ]);
-    state = { tasks: (t && t.tasks) || [], streaks: (s && s.streaks) || [] };
+    state = {
+      ...state,
+      tasks: (t && t.tasks) || [],
+      streaks: (s && s.streaks) || [],
+      missed: (m && m.missed) || [],
+      overrides: (o && o.overrides) || state.overrides,
+      today: (t && t.today) || todayISO(),
+      tomorrow: (t && t.tomorrow) || addDaysISO(todayISO(), 1),
+      todayComplete: !!(t && t.todayComplete),
+      overrideActive: !!(t && t.overrideActive),
+    };
     emit();
   }
 
@@ -1790,7 +1918,7 @@ const Store = (() => {
     maybeImportLocal,
     reset() { state = { tasks: [], streaks: [] }; emit(); },
 
-    async addTask({ text, recurrence, trackStreak, startedAt, category }) {
+    async addTask({ text, recurrence, trackStreak, startedAt, category, scheduledDate }) {
       const t = (text || '').trim();
       if (!t) return;
       const tmpId = 'tmp:' + uid();
@@ -1801,6 +1929,7 @@ const Store = (() => {
         text: t,
         createdAt: Date.now(),
         startedAt: startedAt || nowLocalDT(),
+        scheduledDate: recurrence ? null : (scheduledDate || state.tomorrow),
         recurrence: recurrence || null,
         trackStreak: !!(isDaily && trackStreak),
         category: category || null,
@@ -1814,12 +1943,15 @@ const Store = (() => {
           const { task } = await api('POST', '/api/tasks', {
             text: t,
             startedAt: optimistic.startedAt,
+            scheduledDate: optimistic.scheduledDate,
             recurrence: optimistic.recurrence,
             trackStreak: optimistic.trackStreak,
             category: optimistic.category,
             devMode,
           });
-          return (s) => ({ ...s, tasks: s.tasks.map(x => x.id === tmpId ? task : x) });
+          // Server may also flip todayComplete / overrideActive on us; pull a fresh snapshot.
+          await load();
+          return (s) => s;
         }
       );
     },
@@ -1827,7 +1959,6 @@ const Store = (() => {
     async updateTask(id, updates) {
       if (isTemp(id)) return; // can't patch a row that isn't saved yet
       const sanitized = { ...updates };
-      // Mirror the server's invariant: tracking only makes sense for daily recurrence.
       if (sanitized.recurrence !== undefined) {
         if (!sanitized.recurrence || sanitized.recurrence.type !== 'daily') sanitized.trackStreak = false;
       }
@@ -1835,6 +1966,11 @@ const Store = (() => {
         (s) => ({ ...s, tasks: s.tasks.map(x => x.id === id ? { ...x, ...sanitized } : x) }),
         async () => {
           const { task } = await api('PATCH', `/api/tasks/${id}`, sanitized);
+          // Completion changes can flip todayComplete; reload the day snapshot.
+          if (sanitized.done !== undefined || sanitized.completedDates !== undefined) {
+            await load();
+            return (s) => s;
+          }
           return (s) => ({ ...s, tasks: s.tasks.map(x => x.id === id ? task : x) });
         }
       );
@@ -1903,6 +2039,30 @@ const Store = (() => {
         (s) => ({ ...s, streaks: s.streaks.filter(x => x.id !== id) }),
         async () => { await api('DELETE', `/api/streaks/${id}`); }
       );
+    },
+
+    // Overrides + missed-task carry-over.
+    async useOverride() {
+      try {
+        const { overrides } = await api('POST', '/api/overrides/use');
+        state = { ...state, overrides, overrideActive: !!overrides.active };
+        emit();
+        // The lock state changes server-side; pull a fresh snapshot.
+        await load();
+        return { ok: true };
+      } catch (e) {
+        return { ok: false, error: e && e.message };
+      }
+    },
+    async retryMissed(id) {
+      try {
+        await api('POST', `/api/tasks/missed/${id}/retry`);
+        await load();
+        return { ok: true };
+      } catch (e) {
+        banner('Could not re-add task', true);
+        return { ok: false, error: e && e.message };
+      }
     },
   };
 })();
@@ -2202,55 +2362,133 @@ function renderStatStrip(state) {
   sub.textContent = `${done} of ${total} complete`;
 }
 
+// Currently-selected day on the To Do tab. Toggle pill at the top.
+let selectedDay = 'today';
+
+// True if the user can mutate (add/edit/delete) tasks for the given day right now.
+function canEditDay(state, dayKey) {
+  if (Auth.isDev()) return true;
+  if (dayKey === 'today') return state.overrideActive;
+  if (dayKey === 'tomorrow') return state.todayComplete;
+  return false;
+}
+
+// Pick which date string a task is scheduled for, given the current state.
+// Recurring templates schedule by day-of-week; one-shots use scheduledDate
+// (with a fallback to "today" for legacy rows that pre-date the column).
+function taskScheduledFor(t, dayISO) {
+  if (t.recurrence) {
+    const days = (t.recurrence.daysOfWeek) || [];
+    return days.includes(new Date(dayISO + 'T00:00:00').getDay());
+  }
+  const sched = t.scheduledDate || dayISO; // legacy fallback
+  return sched === dayISO;
+}
+
+function isTaskDoneOn(t, dayISO) {
+  if (!t.recurrence) return t.done;
+  return (t.completedDates || []).includes(dayISO);
+}
+
+function renderDayToggle(state) {
+  const tomorrowEnabled = canEditDay(state, 'tomorrow') || state.tasks.some(t => taskScheduledFor(t, state.tomorrow));
+  const todayBtn = document.querySelector('.day-chip[data-day="today"]');
+  const tomorrowBtn = document.querySelector('.day-chip[data-day="tomorrow"]');
+  if (todayBtn) todayBtn.classList.toggle('selected', selectedDay === 'today');
+  if (tomorrowBtn) {
+    tomorrowBtn.classList.toggle('selected', selectedDay === 'tomorrow');
+    tomorrowBtn.disabled = !tomorrowEnabled;
+  }
+}
+
+function renderLockBanner(state) {
+  const banner = document.getElementById('lock-banner');
+  if (!banner) return;
+  let msg = '';
+  if (selectedDay === 'today') {
+    if (Auth.isDev()) msg = '🛠 Developer mode — locks bypassed.';
+    else if (state.overrideActive) msg = '🔓 Override active — today is editable until midnight.';
+    else msg = '🔒 Today is locked. Tap each task to check it off.';
+  } else {
+    if (state.todayComplete) msg = '✓ Today is complete. Plan tomorrow — list locks at midnight.';
+    else msg = `🔒 Finish today's tasks first to unlock tomorrow's planning.`;
+  }
+  banner.innerHTML = msg;
+  banner.hidden = false;
+}
+
 function renderTasksView(state) {
-  const today = todayISO();
+  renderDayToggle(state);
+  renderLockBanner(state);
 
-  renderStatStrip(state);
+  const dayISO = selectedDay === 'today' ? state.today : state.tomorrow;
+  const showStatStrip = selectedDay === 'today';
+  if (showStatStrip) renderStatStrip(state);
+  else document.getElementById('stat-strip').hidden = true;
 
-  // Tracked habits that are scheduled today (daily = always)
   const habits = state.tasks.filter(t =>
-    t.recurrence && t.recurrence.type === 'daily' && t.trackStreak && scheduledToday(t)
+    t.recurrence && t.recurrence.type === 'daily' && t.trackStreak && taskScheduledFor(t, dayISO)
   );
   els.habitsWrap.hidden = habits.length === 0;
   if (habits.length) {
     els.habitsList.innerHTML = habits.map(t => {
-      const done = isDoneToday(t);
+      const done = isTaskDoneOn(t, dayISO);
       const streak = doingStreak(t.completedDates);
+      const meta = (selectedDay === 'today' && streak > 0) ? `<span class="row-meta">🔥 ${streak}</span>` : '';
+      // Habit rows on the locked day show no edit pencil. On tomorrow (when
+      // editable) we let the user adjust the recurrence/category.
+      const editBtn = canEditDay(state, selectedDay)
+        ? `<button class="icon-btn" data-action="task-edit" aria-label="Edit habit">${pencilIcon}</button>`
+        : '';
       return `
         <li class="row ${done ? 'done' : ''}" data-task-id="${t.id}">
-          <button class="check ${done ? 'done' : ''}" data-action="task-toggle" aria-label="Mark done today"></button>
+          <button class="check ${done ? 'done' : ''}" data-action="task-toggle" aria-label="Mark done"></button>
           <div class="row-body"><div class="row-text">${esc(t.text)}</div></div>
-          ${streak > 0 ? `<span class="row-meta">🔥 ${streak}</span>` : ''}
-          <button class="icon-btn" data-action="task-edit" aria-label="Edit habit">${pencilIcon}</button>
+          ${meta}
+          ${editBtn}
         </li>`;
     }).join('');
   }
 
-  // Regular tasks: one-shots + non-tracked recurring scheduled today
+  const editable = canEditDay(state, selectedDay);
   const tasks = state.tasks
     .filter(t => !(t.recurrence && t.recurrence.type === 'daily' && t.trackStreak))
-    .filter(t => scheduledToday(t))
+    .filter(t => taskScheduledFor(t, dayISO))
     .sort((a, b) => {
-      const ad = isDoneToday(a) ? 1 : 0;
-      const bd = isDoneToday(b) ? 1 : 0;
-      if (ad !== bd) return ad - bd; // done to the bottom
+      const ad = isTaskDoneOn(a, dayISO) ? 1 : 0;
+      const bd = isTaskDoneOn(b, dayISO) ? 1 : 0;
+      if (ad !== bd) return ad - bd;
       return b.createdAt - a.createdAt;
     });
 
   if (tasks.length === 0) {
     els.tasksList.innerHTML = '';
     els.tasksEmpty.style.display = 'block';
+    const sub = document.getElementById('tasks-empty-sub');
+    if (sub) {
+      if (selectedDay === 'today') sub.textContent = state.overrideActive
+        ? 'Override active — tap "+ New task" to add to today.'
+        : 'Today\u2019s list was empty when it locked.';
+      else sub.textContent = state.todayComplete
+        ? 'Tap "+ New task" to plan tomorrow.'
+        : 'Finish today\u2019s tasks to unlock planning.';
+    }
   } else {
     els.tasksEmpty.style.display = 'none';
     els.tasksList.innerHTML = tasks.map(t => {
-      const done = isDoneToday(t);
+      const done = isTaskDoneOn(t, dayISO);
       const schedule = scheduleLabel(t.recurrence);
       const badges = [];
       if (schedule) badges.push(`<span class="badge">↻ ${esc(schedule)}</span>`);
       if (t.category) badges.push(`<span class="badge">${esc(t.category)}</span>`);
+      if (t.parentTaskId) badges.push(`<span class="badge">↺ from missed</span>`);
       const sub = badges.length ? `<div class="row-sub">${badges.join('')}</div>` : '';
-      // Every task gets an edit button so one-shots can be re-categorised etc.
-      const editBtn = `<button class="icon-btn" data-action="task-edit" aria-label="Edit task">${pencilIcon}</button>`;
+      const editBtn = editable
+        ? `<button class="icon-btn" data-action="task-edit" aria-label="Edit task">${pencilIcon}</button>`
+        : '';
+      const deleteBtn = editable
+        ? `<button class="icon-btn danger" data-action="task-delete" aria-label="Delete task">${trashIcon}</button>`
+        : '';
       return `
         <li class="row ${done ? 'done' : ''}" data-task-id="${t.id}">
           <button class="check ${done ? 'done' : ''}" data-action="task-toggle" aria-label="Mark done"></button>
@@ -2259,7 +2497,7 @@ function renderTasksView(state) {
             ${sub}
           </div>
           ${editBtn}
-          <button class="icon-btn danger" data-action="task-delete" aria-label="Delete task">${trashIcon}</button>
+          ${deleteBtn}
         </li>`;
     }).join('');
   }
@@ -2477,6 +2715,8 @@ function render(state) {
   renderTasksView(state);
   renderStreaksView(state);
   renderAnalyticsView(state);
+  renderOverrides(state);
+  renderMissed(state);
 }
 
 /* ============================================================
@@ -2485,6 +2725,36 @@ function render(state) {
 
 // --- Tab bar ---
 els.tabs.forEach(btn => btn.addEventListener('click', () => setTab(btn.dataset.tab)));
+
+// --- Day toggle (Today / Tomorrow) on the To Do tab ---
+document.getElementById('day-toggle').addEventListener('click', (e) => {
+  const c = e.target.closest('.day-chip');
+  if (!c || c.disabled) return;
+  selectedDay = c.dataset.day;
+  render(Store.get());
+});
+
+// --- Use Override button on Profile ---
+document.getElementById('use-override').addEventListener('click', async () => {
+  const r = await Store.useOverride();
+  if (!r.ok) {
+    if (r.error === 'paywall') {
+      banner('Out of free overrides — $4.99 IAP coming soon.', true, 4000);
+    } else {
+      banner('Could not use override', true);
+    }
+    return;
+  }
+  banner('Override active — today is editable.');
+});
+
+// --- Missed-list click delegation (retry button) ---
+document.getElementById('missed-list').addEventListener('click', async (e) => {
+  const btn = e.target.closest('[data-action="missed-retry"]');
+  if (!btn) return;
+  const id = btn.closest('[data-task-id]').dataset.taskId;
+  await Store.retryMissed(id);
+});
 
 // --- Analytics period dropdown ---
 document.getElementById('analytics-period').addEventListener('change', (e) => {
@@ -2564,10 +2834,18 @@ els.topAction.addEventListener('click', () => {
   }
   if (currentTab === 'todo') {
     if (isDockClosed()) {
+      // Refuse to open the dock if the day isn't editable — saves the user
+      // from typing a task that the server would reject. Surface why.
+      if (!canEditDay(Store.get(), selectedDay)) {
+        if (selectedDay === 'today') {
+          banner('Today is locked. Use an override on the Profile tab.', true, 3500);
+        } else {
+          banner('Finish today\u2019s tasks before planning tomorrow.', true, 3500);
+        }
+        return;
+      }
       TaskForm.reset();
       openDock();
-      // Wait for the slide-up transition before focusing so the keyboard
-      // doesn't pop up ahead of the dock.
       setTimeout(() => els.taskInput.focus(), 300);
     } else {
       closeDock();
@@ -2608,12 +2886,16 @@ els.taskForm.addEventListener('submit', (e) => {
 
   const recurrence = TaskForm.toRecurrence();
   const category = TaskForm.category || null;
-  const updates = { text, recurrence, trackStreak: TaskForm.track, category };
+  const state = Store.get();
+  // The new task goes to whichever day the user is currently looking at —
+  // today (only allowed with override active) or tomorrow (the planning lane).
+  const scheduledDate = recurrence ? null : (selectedDay === 'today' ? state.today : state.tomorrow);
+  const updates = { text, recurrence, trackStreak: TaskForm.track, category, scheduledDate };
 
   if (TaskForm.editingId) {
     Store.updateTask(TaskForm.editingId, updates);
   } else {
-    Store.addTask({ text, recurrence, trackStreak: TaskForm.track, category });
+    Store.addTask({ text, recurrence, trackStreak: TaskForm.track, category, scheduledDate });
   }
 
   TaskForm.reset();
@@ -2865,6 +3147,58 @@ function renderProfile() {
   if (devTitle) devTitle.hidden = !isDev;
   if (devCard) devCard.hidden = !isDev;
   if (devToggle) devToggle.checked = isDev && DevMode.on;
+}
+
+function renderOverrides(state) {
+  const ov = state.overrides || { used: 0, remaining: 3, active: false };
+  const title = document.getElementById('override-title');
+  const sub = document.getElementById('override-sub');
+  const btn = document.getElementById('use-override');
+  if (!title || !btn) return;
+  if (ov.active) {
+    title.textContent = 'Override active until midnight';
+    sub.textContent = `${ov.remaining} free overrides remaining this month.`;
+    btn.textContent = 'Active';
+    btn.disabled = true;
+  } else if (ov.remaining > 0) {
+    title.textContent = `${ov.remaining} override${ov.remaining === 1 ? '' : 's'} left this month`;
+    sub.textContent = 'Use one to unlock today\u2019s list when you missed planning the night before.';
+    btn.textContent = 'Use';
+    btn.disabled = false;
+  } else {
+    title.textContent = 'Out of free overrides this month';
+    sub.textContent = 'Additional overrides are $4.99 each (in-app purchase coming soon).';
+    btn.textContent = '$4.99';
+    btn.disabled = false;
+  }
+}
+
+function renderMissed(state) {
+  const list = document.getElementById('missed-list');
+  const empty = document.getElementById('missed-empty');
+  if (!list || !empty) return;
+  const missed = state.missed || [];
+  if (missed.length === 0) {
+    list.innerHTML = '';
+    empty.style.display = 'block';
+    return;
+  }
+  empty.style.display = 'none';
+  list.innerHTML = missed.map(t => {
+    const cat = t.category ? `<span class="badge">${esc(t.category)}</span>` : '';
+    const dateStr = fmtDateOnly(t.scheduledDate);
+    return `
+      <li class="row row-missed" data-task-id="${t.id}">
+        <div class="row-body">
+          <div class="row-text">${esc(t.text)}</div>
+          <div class="row-sub">
+            <span class="badge">Missed ${esc(dateStr)}</span>
+            ${cat}
+          </div>
+        </div>
+        <button class="row-retry" data-action="missed-retry">Add to today</button>
+      </li>`;
+  }).join('');
 }
 
 // Dev-mode toggle — persists to localStorage; the server enforces the

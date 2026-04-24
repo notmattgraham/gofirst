@@ -13,16 +13,26 @@ router.get('/google/callback',
   (req, res) => res.redirect('/')
 );
 
+function shape(u) {
+  return {
+    id: u.id,
+    email: u.email,
+    name: u.name,
+    picture: u.picture,
+    timezone: u.timezone,
+    overridesUsed: u.overridesUsed,
+    overrideActiveDate: u.overrideActiveDate,
+    isDev: u.email === 'mattgraham15@gmail.com',
+  };
+}
+
 // Who am I?  Returns { user: null } when signed out.
 router.get('/me', (req, res) => {
   if (!req.user) return res.json({ user: null });
-  const { id, email, name, picture } = req.user;
-  res.json({ user: { id, email, name, picture } });
+  res.json({ user: shape(req.user) });
 });
 
-// Update the signed-in user's display name / avatar. The client sends
-// { name?: string, picture?: string } where `picture` is a base64 data-URL
-// pre-downscaled to 256x256 (~30–50 KB as JPEG). Cap at ~700 KB for safety.
+// Update the signed-in user's display name / avatar / timezone.
 router.patch('/me', express.json({ limit: '2mb' }), async (req, res) => {
   if (!req.user) return res.status(401).json({ error: 'unauthenticated' });
   const data = {};
@@ -34,16 +44,19 @@ router.patch('/me', express.json({ limit: '2mb' }), async (req, res) => {
     if (req.body.picture.length > 700000) {
       return res.status(413).json({ error: 'picture too large' });
     }
-    // Must be a data URL or an http(s) URL.
     const ok = /^(data:image\/(png|jpe?g|webp|gif);base64,|https?:\/\/)/i.test(req.body.picture);
     if (!ok && req.body.picture !== '') {
       return res.status(400).json({ error: 'invalid picture' });
     }
     data.picture = req.body.picture || null;
   }
-  if (Object.keys(data).length === 0) return res.json({ user: { id: req.user.id, email: req.user.email, name: req.user.name, picture: req.user.picture } });
+  if (typeof req.body.timezone === 'string') {
+    // Trust IANA-shaped strings only ("Region/City" or fixed names like "UTC").
+    if (/^[A-Za-z_+\-/0-9]{3,60}$/.test(req.body.timezone)) data.timezone = req.body.timezone;
+  }
+  if (Object.keys(data).length === 0) return res.json({ user: shape(req.user) });
   const user = await prisma.user.update({ where: { id: req.user.id }, data });
-  res.json({ user: { id: user.id, email: user.email, name: user.name, picture: user.picture } });
+  res.json({ user: shape(user) });
 });
 
 // Log out. Destroys the session so the cookie can't be replayed.

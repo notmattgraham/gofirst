@@ -16,6 +16,18 @@ model User {
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
 
+  // IANA timezone (e.g. "America/New_York"). Sent by the client on each load.
+  // Drives midnight calculations and lock enforcement server-side.
+  timezone    String?
+
+  // Override (a.k.a. mulligan) bookkeeping. 3 free per rolling month.
+  overridesUsed       Int      @default(0)
+  // First day of the current month-long quota window. Reset every 30 days.
+  overrideMonthStart  DateTime @default(now())
+  // YYYY-MM-DD string. When this matches the user's local "today", the lock
+  // is bypassed for today only (allows add/edit/delete on today's list).
+  overrideActiveDate  String?
+
   tasks       Task[]
   quitStreaks QuitStreak[]
 }
@@ -28,6 +40,13 @@ model Task {
   text            String
   // Local-time datetime string (YYYY-MM-DDTHH:MM), used for "Since {date}" display.
   startedAt       String
+  // Day this task is committed to (YYYY-MM-DD in user TZ). Null for recurring
+  // task templates — those are scheduled by recurrence rule, not a fixed date.
+  scheduledDate   String?
+  // If this task is a re-add of a missed task, points back to the original.
+  // The duplicate counts on its own scheduledDate; the original still counts
+  // as a miss on its scheduled day.
+  parentTaskId    String?
   // Null = one-shot task. Else { type: 'daily' | 'weekly' | 'custom', daysOfWeek: number[] }.
   recurrence      Json?
   // Only meaningful when recurrence.type === 'daily'. If true, shows on Streaks tab.

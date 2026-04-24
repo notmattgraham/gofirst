@@ -44,6 +44,7 @@ app.get('/healthz', (_req, res) => res.json({ ok: true }));
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/tasks', require('./routes/tasks'));
 app.use('/api/streaks', require('./routes/streaks'));
+app.use('/api/overrides', require('./routes/overrides'));
 
 // Static assets — the SPA lives in /public.
 const publicDir = path.join(__dirname, '..', 'public');
