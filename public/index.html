@@ -1465,6 +1465,7 @@ const els = {
     todo: document.getElementById('view-todo'),
     streaks: document.getElementById('view-streaks'),
   },
+  main: document.getElementById('main'),
   habitsWrap: document.getElementById('habits-wrap'),
   habitsList: document.getElementById('habits-list'),
   tasksList: document.getElementById('tasks-list'),
@@ -2018,14 +2019,16 @@ Store.subscribe(render);
 // when the gesture is clearly horizontal (dx dominates dy) and under 500ms so
 // vertical scrolls and long drags don't get mistaken for tab changes.
 (() => {
+  const mainEl = document.getElementById('main');
+  if (!mainEl) return;
   const TABS = ['todo', 'streaks'];
   let start = null;
-  els.main.addEventListener('touchstart', (e) => {
+  mainEl.addEventListener('touchstart', (e) => {
     if (e.touches.length !== 1) { start = null; return; }
     const t = e.touches[0];
     start = { x: t.clientX, y: t.clientY, at: Date.now() };
   }, { passive: true });
-  els.main.addEventListener('touchend', (e) => {
+  mainEl.addEventListener('touchend', (e) => {
     if (!start) return;
     const t = e.changedTouches[0];
     const dx = t.clientX - start.x;
