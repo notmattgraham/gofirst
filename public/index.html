@@ -39,8 +39,10 @@
     --nav-h: 56px;
   }
 
+  /* Light palette reused for both system-preference and explicit override.
+     data-theme wins over the media query because it's a more specific selector. */
   @media (prefers-color-scheme: light) {
-    :root {
+    :root:not([data-theme="dark"]) {
       --bg: #f4f6fa;
       --bg-elev: #ffffff;
       --surface: #ffffff;
@@ -57,6 +59,23 @@
       --success: #059669;
       --warn: #d97706;
     }
+  }
+  [data-theme="light"] {
+    --bg: #f4f6fa;
+    --bg-elev: #ffffff;
+    --surface: #ffffff;
+    --surface-2: #f0f2f7;
+    --border: #e4e7ee;
+    --text: #1a1d25;
+    --text-dim: #6b7280;
+    --text-faint: #9ca3af;
+    --accent: #1a1d25;
+    --accent-hover: #000000;
+    --accent-dim: rgba(26, 29, 37, 0.08);
+    --accent-fg: #ffffff;
+    --danger: #dc2626;
+    --success: #059669;
+    --warn: #d97706;
   }
 
   * {
@@ -134,15 +153,32 @@
   .top-action:active { background: var(--surface-2); }
 
   /* --- Scrollable main ----------------------------------------- */
+  /* .main holds a horizontal slider with all views side-by-side.
+     Transform on .view-slider animates between tabs so the header
+     and tab-bar stay fixed while content slides underneath. */
   .main {
     flex: 1;
+    overflow: hidden;
+    position: relative;
+  }
+  .view-slider {
+    display: flex;
+    height: 100%;
+    width: 100%;
+    transition: transform 0.26s cubic-bezier(0.2, 0.8, 0.2, 1);
+    will-change: transform;
+  }
+  .view {
+    flex: 0 0 100%;
+    width: 100%;
+    height: 100%;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
     padding: 12px 14px calc(var(--nav-h) + var(--safe-bottom) + 96px);
   }
-
-  .view { display: none; }
-  .view.active { display: block; }
+  /* Every view starts with the same top padding so switching tabs
+     never shifts the first content line up or down. */
+  .view > :first-child { margin-top: 4px !important; }
 
   .section-title {
     font-size: 12px;
@@ -269,6 +305,135 @@
     padding: 0 16px 12px;
     font-size: 12px;
     color: var(--text-dim);
+  }
+
+  /* Styled native <select> that matches the input look */
+  .select-wrap {
+    position: relative;
+  }
+  .select-wrap::after {
+    content: "";
+    position: absolute;
+    right: 16px;
+    top: 50%;
+    transform: translateY(-25%);
+    width: 8px;
+    height: 8px;
+    border-right: 2px solid var(--text-dim);
+    border-bottom: 2px solid var(--text-dim);
+    transform: translateY(-60%) rotate(45deg);
+    pointer-events: none;
+  }
+  select.field-input {
+    appearance: none;
+    -webkit-appearance: none;
+    padding-right: 40px;
+  }
+
+  /* Analytics category breakdown rows */
+  .category-list {
+    list-style: none;
+    margin: 0;
+    padding: 4px 0;
+  }
+  .category-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+  }
+  .category-row:last-child { border-bottom: none; }
+  .category-name {
+    flex: 1;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text);
+  }
+  .category-rate {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+    font-variant-numeric: tabular-nums;
+    min-width: 48px;
+    text-align: right;
+  }
+  .category-sub {
+    flex-shrink: 0;
+    font-size: 12px;
+    color: var(--text-dim);
+    font-variant-numeric: tabular-nums;
+  }
+  .category-empty {
+    padding: 18px;
+    font-size: 13px;
+    color: var(--text-dim);
+    text-align: center;
+  }
+
+  /* Profile view */
+  .profile-head {
+    padding: 24px 20px;
+    text-align: center;
+  }
+  .profile-avatar {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    margin: 0 auto 12px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text);
+    font-size: 24px;
+    font-weight: 600;
+    overflow: hidden;
+  }
+  .profile-avatar img { width: 100%; height: 100%; object-fit: cover; }
+  .profile-name {
+    font-size: 17px;
+    font-weight: 600;
+    color: var(--text);
+  }
+  .profile-email {
+    font-size: 13px;
+    color: var(--text-dim);
+    margin-top: 2px;
+  }
+
+  .setting-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border);
+  }
+  .setting-row:last-child { border-bottom: none; }
+  .setting-copy { flex: 1; min-width: 0; }
+  .setting-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+  }
+  .setting-sub {
+    font-size: 12px;
+    color: var(--text-dim);
+    margin-top: 2px;
+  }
+  .setting-select {
+    width: auto;
+    min-height: 36px;
+    padding: 6px 36px 6px 12px;
+    font-size: 14px;
+  }
+  .setting-btn {
+    flex: 0 0 auto;
+    min-width: 0;
+    padding: 8px 14px;
+    min-height: 36px;
+    font-size: 13px;
   }
 
   /* --- Cards & list rows --------------------------------------- */
@@ -958,23 +1123,14 @@
   <div class="app">
     <header class="top">
       <div class="brand"><img src="applogo.svg" alt="GoFirst" /></div>
-      <div class="top-user">
-        <button class="top-action" id="top-action" hidden></button>
-        <button class="avatar-btn" id="avatar-btn" hidden aria-label="Account menu">?</button>
-        <div class="user-menu" id="user-menu" hidden>
-          <div class="user-menu-head">
-            <div class="user-menu-name" id="user-menu-name"></div>
-            <div class="user-menu-email" id="user-menu-email"></div>
-          </div>
-          <button id="user-menu-logout">Sign out</button>
-        </div>
-      </div>
+      <button class="top-action" id="top-action" hidden></button>
     </header>
     <div class="sync-banner" id="sync-banner"></div>
 
     <main class="main" id="main">
+      <div class="view-slider" id="view-slider">
       <!-- To Do List view -->
-      <section id="view-todo" class="view active">
+      <section id="view-todo" class="view">
         <div class="stat-strip" id="stat-strip" hidden>
           <div class="stat-ring" id="stat-ring"
                style="background: conic-gradient(var(--accent) 0deg, var(--surface-2) 0deg);">
@@ -1035,12 +1191,13 @@
       <!-- Analytics view -->
       <section id="view-analytics" class="view">
         <div class="section-title">Period</div>
-        <div class="chip-row" id="analytics-period">
-          <button type="button" class="chip selected" data-period="week">This week</button>
-          <button type="button" class="chip" data-period="month">This month</button>
-          <button type="button" class="chip" data-period="lastMonth">Last month</button>
-          <button type="button" class="chip" data-period="year">This year</button>
-          <button type="button" class="chip" data-period="lastYear">Last year</button>
+        <div class="select-wrap">
+          <select id="analytics-period" class="field-input">
+            <option value="7days">Last 7 days</option>
+            <option value="14days">Last 14 days</option>
+            <option value="month">This month</option>
+            <option value="year">This year</option>
+          </select>
         </div>
 
         <div class="section-title">Execution rate</div>
@@ -1051,12 +1208,8 @@
         </div>
 
         <div class="section-title">By category</div>
-        <div class="card analytics-placeholder">
-          <div class="analytics-placeholder-title">Category breakdown — coming soon</div>
-          <div class="analytics-placeholder-sub">
-            Once tasks can be tagged (Family, Work, Fitness, etc.) you'll see your
-            execution rate sliced by category here.
-          </div>
+        <div class="card" id="analytics-categories-card">
+          <ul class="category-list" id="analytics-categories"></ul>
         </div>
 
         <div class="section-title">Notes</div>
@@ -1070,6 +1223,60 @@
           <div class="notes-status" id="notes-status">Saved</div>
         </div>
       </section>
+
+      <!-- Profile view -->
+      <section id="view-profile" class="view">
+        <div class="profile-head card">
+          <div class="profile-avatar" id="profile-avatar">?</div>
+          <div class="profile-name" id="profile-name"></div>
+          <div class="profile-email" id="profile-email"></div>
+        </div>
+
+        <div class="section-title">Appearance</div>
+        <div class="card">
+          <div class="setting-row">
+            <div class="setting-copy">
+              <div class="setting-title">Theme</div>
+              <div class="setting-sub">Match system, force dark, or force light.</div>
+            </div>
+            <select id="theme-select" class="field-input setting-select">
+              <option value="system">System</option>
+              <option value="dark">Dark</option>
+              <option value="light">Light</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="section-title">Account</div>
+        <div class="card">
+          <div class="setting-row">
+            <div class="setting-copy">
+              <div class="setting-title">Display name</div>
+              <div class="setting-sub" id="profile-name-sub"></div>
+            </div>
+            <button class="action-btn ghost setting-btn" id="edit-name-btn" disabled>Coming soon</button>
+          </div>
+          <div class="setting-row">
+            <div class="setting-copy">
+              <div class="setting-title">Profile picture</div>
+              <div class="setting-sub">Currently pulled from your Google account.</div>
+            </div>
+            <button class="action-btn ghost setting-btn" id="edit-avatar-btn" disabled>Coming soon</button>
+          </div>
+        </div>
+
+        <div class="section-title">Session</div>
+        <div class="card">
+          <div class="setting-row">
+            <div class="setting-copy">
+              <div class="setting-title">Sign out</div>
+              <div class="setting-sub">You'll need to sign in again to sync tasks.</div>
+            </div>
+            <button class="action-btn setting-btn" id="profile-logout">Sign out</button>
+          </div>
+        </div>
+      </section>
+      </div>
     </main>
 
     <!-- Docked new-task area: options panel + input bar -->
@@ -1080,6 +1287,20 @@
       </div>
 
       <div class="task-options" id="task-options" hidden>
+        <div class="field">
+          <label class="field-label" for="task-category">Category</label>
+          <div class="select-wrap">
+            <select id="task-category" class="field-input">
+              <option value="">— No category —</option>
+              <option value="Family">Family</option>
+              <option value="Fitness">Fitness</option>
+              <option value="Career">Career</option>
+              <option value="Self-Improvement">Self-Improvement</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+        </div>
+
         <div class="field">
           <span class="field-label">Repeat</span>
           <div class="chip-row" id="repeat-toggle">
@@ -1120,9 +1341,14 @@
 
       <form class="dock" id="task-form" autocomplete="off">
         <button type="button" class="dock-toggle" id="dock-toggle" aria-label="Task options">
+          <!-- Sliders icon — represents category, repeat, tracking options. -->
           <svg viewBox="0 0 24 24">
-            <circle cx="12" cy="12" r="9"/>
-            <path d="M12 7v5l3 2"/>
+            <line x1="4" y1="7" x2="20" y2="7"/>
+            <circle cx="9" cy="7" r="2.2" fill="currentColor" stroke="none"/>
+            <line x1="4" y1="12" x2="20" y2="12"/>
+            <circle cx="15" cy="12" r="2.2" fill="currentColor" stroke="none"/>
+            <line x1="4" y1="17" x2="20" y2="17"/>
+            <circle cx="8" cy="17" r="2.2" fill="currentColor" stroke="none"/>
           </svg>
         </button>
         <input
@@ -1178,6 +1404,13 @@
           <path d="M22 20H2"/>
         </svg>
         Analytics
+      </button>
+      <button class="tab" data-tab="profile">
+        <svg viewBox="0 0 24 24">
+          <circle cx="12" cy="8" r="4"/>
+          <path d="M4 21v-1a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6v1"/>
+        </svg>
+        Profile
       </button>
     </nav>
   </div>
@@ -1447,7 +1680,7 @@ const Store = (() => {
     maybeImportLocal,
     reset() { state = { tasks: [], streaks: [] }; emit(); },
 
-    async addTask({ text, recurrence, trackStreak, startedAt }) {
+    async addTask({ text, recurrence, trackStreak, startedAt, category }) {
       const t = (text || '').trim();
       if (!t) return;
       const tmpId = 'tmp:' + uid();
@@ -1459,6 +1692,7 @@ const Store = (() => {
         startedAt: startedAt || nowLocalDT(),
         recurrence: recurrence || null,
         trackStreak: !!(isDaily && trackStreak),
+        category: category || null,
         done: false,
         completedDates: [],
       };
@@ -1466,7 +1700,11 @@ const Store = (() => {
         (s) => ({ ...s, tasks: [optimistic, ...s.tasks] }),
         async () => {
           const { task } = await api('POST', '/api/tasks', {
-            text: t, startedAt: optimistic.startedAt, recurrence: optimistic.recurrence, trackStreak: optimistic.trackStreak,
+            text: t,
+            startedAt: optimistic.startedAt,
+            recurrence: optimistic.recurrence,
+            trackStreak: optimistic.trackStreak,
+            category: optimistic.category,
           });
           return (s) => ({ ...s, tasks: s.tasks.map(x => x.id === tmpId ? task : x) });
         }
@@ -1579,6 +1817,7 @@ const els = {
     todo: document.getElementById('view-todo'),
     streaks: document.getElementById('view-streaks'),
     analytics: document.getElementById('view-analytics'),
+    profile: document.getElementById('view-profile'),
   },
   main: document.getElementById('main'),
   habitsWrap: document.getElementById('habits-wrap'),
@@ -1620,15 +1859,19 @@ const TaskForm = {
   repeat: 'none',       // 'none' | 'daily' | 'weekly' | 'custom'
   daysOfWeek: [],       // for 'weekly' (single) and 'custom' (many)
   track: false,
+  category: '',         // '' | Family | Fitness | Career | Self-Improvement | Other
 
   reset() {
     this.editingId = null;
     this.repeat = 'none';
     this.daysOfWeek = [];
     this.track = false;
+    this.category = '';
     els.taskInput.value = '';
     els.taskSubmit.disabled = true;
     els.taskSubmit.textContent = '+';
+    const catEl = document.getElementById('task-category');
+    if (catEl) catEl.value = '';
     this.renderChips();
     this.applyVisibility();
     els.editBanner.hidden = true;
@@ -1647,6 +1890,9 @@ const TaskForm = {
       this.daysOfWeek = [];
     }
     this.track = !!task.trackStreak;
+    this.category = task.category || '';
+    const catEl = document.getElementById('task-category');
+    if (catEl) catEl.value = this.category;
     els.trackInput.checked = this.track;
     this.renderChips();
     this.applyVisibility();
@@ -1761,10 +2007,14 @@ function setTopAction() {
     els.topAction.hidden = true;
   }
 }
+const TAB_ORDER = ['todo', 'streaks', 'analytics', 'profile'];
 function setTab(name) {
+  if (!TAB_ORDER.includes(name)) name = 'todo';
   currentTab = name;
   els.tabs.forEach(t => t.classList.toggle('active', t.dataset.tab === name));
-  Object.entries(els.views).forEach(([k, el]) => el.classList.toggle('active', k === name));
+  const idx = TAB_ORDER.indexOf(name);
+  const slider = document.getElementById('view-slider');
+  if (slider) slider.style.transform = `translateX(-${idx * 100}%)`;
   els.dockWrap.hidden = name !== 'todo';
   setTopAction();
 }
@@ -1837,10 +2087,12 @@ function renderTasksView(state) {
     els.tasksList.innerHTML = tasks.map(t => {
       const done = isDoneToday(t);
       const schedule = scheduleLabel(t.recurrence);
-      const sub = schedule ? `<div class="row-sub"><span class="badge">↻ ${esc(schedule)}</span></div>` : '';
-      const editBtn = t.recurrence
-        ? `<button class="icon-btn" data-action="task-edit" aria-label="Edit task">${pencilIcon}</button>`
-        : '';
+      const badges = [];
+      if (schedule) badges.push(`<span class="badge">↻ ${esc(schedule)}</span>`);
+      if (t.category) badges.push(`<span class="badge">${esc(t.category)}</span>`);
+      const sub = badges.length ? `<div class="row-sub">${badges.join('')}</div>` : '';
+      // Every task gets an edit button so one-shots can be re-categorised etc.
+      const editBtn = `<button class="icon-btn" data-action="task-edit" aria-label="Edit task">${pencilIcon}</button>`;
       return `
         <li class="row ${done ? 'done' : ''}" data-task-id="${t.id}">
           <button class="check ${done ? 'done' : ''}" data-action="task-toggle" aria-label="Mark done"></button>
@@ -1933,55 +2185,41 @@ function renderStreaksView(state) {
        we count them as scheduled on createdAt and completed if done.
    Once the day-lock + scheduledDate system lands, this math gets exact.
    ============================================================ */
-let analyticsPeriod = 'week';
+let analyticsPeriod = '7days';
 
 function periodRange(period) {
   const now = new Date();
   const today = todayISO();
-  if (period === 'week') {
+  if (period === '7days') {
     return { start: addDaysISO(today, -6), end: today, label: 'the last 7 days' };
+  }
+  if (period === '14days') {
+    return { start: addDaysISO(today, -13), end: today, label: 'the last 14 days' };
   }
   if (period === 'month') {
     const s = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-01`;
     return { start: s, end: today, label: 'this month' };
   }
-  if (period === 'lastMonth') {
-    const m = now.getMonth(), y = now.getFullYear();
-    const lm = m === 0 ? 11 : m - 1;
-    const ly = m === 0 ? y - 1 : y;
-    const lastDay = new Date(ly, lm + 1, 0).getDate();
-    return {
-      start: `${ly}-${pad(lm + 1)}-01`,
-      end: `${ly}-${pad(lm + 1)}-${pad(lastDay)}`,
-      label: 'last month',
-    };
-  }
   if (period === 'year') {
     return { start: `${now.getFullYear()}-01-01`, end: today, label: 'this year' };
-  }
-  if (period === 'lastYear') {
-    const y = now.getFullYear() - 1;
-    return { start: `${y}-01-01`, end: `${y}-12-31`, label: 'last year' };
   }
   return { start: today, end: today, label: 'today' };
 }
 
-function computePeriodRate(state, period) {
-  const { start, end } = periodRange(period);
-  let completed = 0, scheduled = 0;
+// Walk a task across a period and return { scheduled, completed } counts.
+function countTaskInRange(t, start, end) {
   const today = todayISO();
   const effectiveEnd = end < today ? end : today;
-  for (const t of state.tasks) {
-    const createdISO = toISO(new Date(t.createdAt));
-    if (!t.recurrence) {
-      // One-shot tasks count once, at their creation date.
-      if (createdISO >= start && createdISO <= effectiveEnd) {
-        scheduled++;
-        if (t.done) completed++;
-      }
-    } else {
-      const days = t.recurrence.daysOfWeek || [];
-      if (!days.length) continue;
+  const createdISO = toISO(new Date(t.createdAt));
+  let scheduled = 0, completed = 0;
+  if (!t.recurrence) {
+    if (createdISO >= start && createdISO <= effectiveEnd) {
+      scheduled = 1;
+      if (t.done) completed = 1;
+    }
+  } else {
+    const days = t.recurrence.daysOfWeek || [];
+    if (days.length) {
       const doneSet = new Set(t.completedDates || []);
       const startCursor = createdISO > start ? createdISO : start;
       let cursor = startCursor;
@@ -1995,11 +2233,38 @@ function computePeriodRate(state, period) {
       }
     }
   }
+  return { scheduled, completed };
+}
+
+function computePeriodRate(state, period) {
+  const { start, end } = periodRange(period);
+  let completed = 0, scheduled = 0;
+  for (const t of state.tasks) {
+    const c = countTaskInRange(t, start, end);
+    scheduled += c.scheduled;
+    completed += c.completed;
+  }
   return { completed, scheduled };
 }
 
+function computeCategoryBreakdown(state, period) {
+  const { start, end } = periodRange(period);
+  const CATS = ['Family', 'Fitness', 'Career', 'Self-Improvement', 'Other'];
+  const buckets = {};
+  for (const cat of CATS) buckets[cat] = { scheduled: 0, completed: 0 };
+  buckets['Uncategorized'] = { scheduled: 0, completed: 0 };
+  for (const t of state.tasks) {
+    const c = countTaskInRange(t, start, end);
+    if (!c.scheduled) continue;
+    const key = t.category && CATS.includes(t.category) ? t.category : 'Uncategorized';
+    buckets[key].scheduled += c.scheduled;
+    buckets[key].completed += c.completed;
+  }
+  return buckets;
+}
+
 function renderAnalyticsView(state) {
-  const { completed, scheduled, } = computePeriodRate(state, analyticsPeriod);
+  const { completed, scheduled } = computePeriodRate(state, analyticsPeriod);
   const { label } = periodRange(analyticsPeriod);
   const rate = scheduled === 0 ? null : Math.round((completed / scheduled) * 100);
   const rateEl = document.getElementById('analytics-rate');
@@ -2014,6 +2279,26 @@ function renderAnalyticsView(state) {
     subEl.textContent = `${completed} of ${scheduled} completed ${label}`;
     barEl.style.width = rate + '%';
   }
+
+  // Category breakdown — hide any bucket with no tasks in the period to keep the list compact.
+  const buckets = computeCategoryBreakdown(state, analyticsPeriod);
+  const list = document.getElementById('analytics-categories');
+  const active = Object.entries(buckets).filter(([, v]) => v.scheduled > 0);
+  if (!active.length) {
+    list.innerHTML = '<li class="category-empty">No categorized tasks in this period yet</li>';
+    return;
+  }
+  list.innerHTML = active
+    .sort((a, b) => (b[1].completed / (b[1].scheduled || 1)) - (a[1].completed / (a[1].scheduled || 1)))
+    .map(([name, v]) => {
+      const r = v.scheduled ? Math.round((v.completed / v.scheduled) * 100) : 0;
+      return `
+        <li class="category-row">
+          <span class="category-name">${name}</span>
+          <span class="category-sub">${v.completed}/${v.scheduled}</span>
+          <span class="category-rate">${r}%</span>
+        </li>`;
+    }).join('');
 }
 
 /* ============================================================
@@ -2041,14 +2326,15 @@ function render(state) {
 // --- Tab bar ---
 els.tabs.forEach(btn => btn.addEventListener('click', () => setTab(btn.dataset.tab)));
 
-// --- Analytics period chips ---
-document.getElementById('analytics-period').addEventListener('click', (e) => {
-  const c = e.target.closest('.chip');
-  if (!c) return;
-  analyticsPeriod = c.dataset.period;
-  document.querySelectorAll('#analytics-period .chip').forEach(x =>
-    x.classList.toggle('selected', x.dataset.period === analyticsPeriod));
+// --- Analytics period dropdown ---
+document.getElementById('analytics-period').addEventListener('change', (e) => {
+  analyticsPeriod = e.target.value;
   renderAnalyticsView(Store.get());
+});
+
+// --- Task category dropdown keeps TaskForm in sync ---
+document.getElementById('task-category').addEventListener('change', (e) => {
+  TaskForm.category = e.target.value || '';
 });
 
 // --- Notes textarea (persistent scratch pad, local-only for now) ---
@@ -2114,12 +2400,13 @@ els.taskForm.addEventListener('submit', (e) => {
   if (!text) return;
 
   const recurrence = TaskForm.toRecurrence();
-  const updates = { text, recurrence, trackStreak: TaskForm.track };
+  const category = TaskForm.category || null;
+  const updates = { text, recurrence, trackStreak: TaskForm.track, category };
 
   if (TaskForm.editingId) {
     Store.updateTask(TaskForm.editingId, updates);
   } else {
-    Store.addTask({ text, recurrence, trackStreak: TaskForm.track });
+    Store.addTask({ text, recurrence, trackStreak: TaskForm.track, category });
   }
 
   TaskForm.reset();
@@ -2269,7 +2556,7 @@ Store.subscribe(render);
 (() => {
   const mainEl = document.getElementById('main');
   if (!mainEl) return;
-  const TABS = ['todo', 'streaks', 'analytics'];
+  const TABS = ['todo', 'streaks', 'analytics', 'profile'];
   let start = null;
   mainEl.addEventListener('touchstart', (e) => {
     if (e.touches.length !== 1) { start = null; return; }
@@ -2301,19 +2588,12 @@ TaskForm.reset();
    ============================================================ */
 const elSplash = document.getElementById('splash');
 const elSplashError = document.getElementById('splash-error');
-const elAvatar = document.getElementById('avatar-btn');
-const elUserMenu = document.getElementById('user-menu');
-const elUserName = document.getElementById('user-menu-name');
-const elUserEmail = document.getElementById('user-menu-email');
-const elLogout = document.getElementById('user-menu-logout');
 
 function showSplash(errorMsg) {
   elSplash.hidden = false;
   if (errorMsg) { elSplashError.textContent = errorMsg; elSplashError.hidden = false; }
   else { elSplashError.hidden = true; }
   els.topAction.hidden = true;
-  elAvatar.hidden = true;
-  elUserMenu.hidden = true;
   els.dockWrap.hidden = true;
 }
 function hideSplash() {
@@ -2321,35 +2601,49 @@ function hideSplash() {
   elSplashError.hidden = true;
 }
 
-function renderUserChip() {
+function renderProfile() {
   const u = Auth.user;
-  if (!u) { elAvatar.hidden = true; return; }
-  elAvatar.hidden = false;
+  const avatar = document.getElementById('profile-avatar');
+  const nameEl = document.getElementById('profile-name');
+  const emailEl = document.getElementById('profile-email');
+  const nameSubEl = document.getElementById('profile-name-sub');
+  if (!u || !avatar) return;
   if (u.picture) {
-    elAvatar.innerHTML = `<img src="${esc(u.picture)}" alt="" referrerpolicy="no-referrer" />`;
+    avatar.innerHTML = `<img src="${esc(u.picture)}" alt="" referrerpolicy="no-referrer" />`;
   } else {
     const initial = (u.name || u.email || '?').trim().charAt(0).toUpperCase();
-    elAvatar.textContent = initial || '?';
+    avatar.textContent = initial || '?';
   }
-  elUserName.textContent = u.name || u.email || '';
-  elUserEmail.textContent = u.email || '';
+  nameEl.textContent = u.name || '(no name)';
+  emailEl.textContent = u.email || '';
+  if (nameSubEl) nameSubEl.textContent = u.name || u.email || '';
 }
 
-elAvatar.addEventListener('click', (e) => {
-  e.stopPropagation();
-  elUserMenu.hidden = !elUserMenu.hidden;
-});
-document.addEventListener('click', (e) => {
-  if (elUserMenu.hidden) return;
-  if (e.target.closest('#user-menu') || e.target.closest('#avatar-btn')) return;
-  elUserMenu.hidden = true;
-});
-elLogout.addEventListener('click', async () => {
-  elUserMenu.hidden = true;
+// Profile → Sign out
+document.getElementById('profile-logout').addEventListener('click', async () => {
   await Auth.logout();
   Store.reset();
   showSplash();
+  setTab('todo');
 });
+
+// Theme toggle — stored locally, applies via data-theme on <html>.
+(() => {
+  const THEME_KEY = 'gofirst:theme';
+  const sel = document.getElementById('theme-select');
+  const saved = (() => { try { return localStorage.getItem(THEME_KEY); } catch { return null; } })() || 'system';
+  function apply(t) {
+    if (t === 'system') document.documentElement.removeAttribute('data-theme');
+    else document.documentElement.setAttribute('data-theme', t);
+  }
+  sel.value = saved;
+  apply(saved);
+  sel.addEventListener('change', () => {
+    const v = sel.value;
+    try { localStorage.setItem(THEME_KEY, v); } catch {}
+    apply(v);
+  });
+})();
 
 async function boot() {
   await Auth.load();
@@ -2360,7 +2654,7 @@ async function boot() {
     return;
   }
   hideSplash();
-  renderUserChip();
+  renderProfile();
   els.dockWrap.hidden = currentTab !== 'todo';
   try {
     await Store.load();

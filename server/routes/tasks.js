@@ -6,6 +6,11 @@ const router = express.Router();
 router.use(requireAuth);
 
 // Trim a task record to the fields the client needs (and nothing more).
+const VALID_CATEGORIES = new Set(['Family', 'Fitness', 'Career', 'Self-Improvement', 'Other']);
+function sanitizeCategory(v) {
+  return typeof v === 'string' && VALID_CATEGORIES.has(v) ? v : null;
+}
+
 function shape(t) {
   return {
     id: t.id,
@@ -13,6 +18,7 @@ function shape(t) {
     startedAt: t.startedAt,
     recurrence: t.recurrence,
     trackStreak: t.trackStreak,
+    category: t.category,
     done: t.done,
     completedDates: t.completedDates,
     createdAt: t.createdAt.getTime ? t.createdAt.getTime() : t.createdAt,
@@ -28,7 +34,7 @@ router.get('/', async (req, res) => {
 });
 
 router.post('/', async (req, res) => {
-  const { text, startedAt, recurrence, trackStreak } = req.body || {};
+  const { text, startedAt, recurrence, trackStreak, category } = req.body || {};
   const trimmed = typeof text === 'string' ? text.trim() : '';
   if (!trimmed) return res.status(400).json({ error: 'text required' });
 
@@ -40,6 +46,7 @@ router.post('/', async (req, res) => {
       startedAt: startedAt || new Date().toISOString(),
       recurrence: recurrence || null,
       trackStreak: !!(isDaily && trackStreak),
+      category: sanitizeCategory(category),
       done: false,
       completedDates: [],
     },
@@ -53,9 +60,12 @@ router.patch('/:id', async (req, res) => {
   if (!existing || existing.userId !== req.user.id) return res.status(404).json({ error: 'not found' });
 
   const data = {};
-  const allowed = ['text', 'startedAt', 'recurrence', 'trackStreak', 'done', 'completedDates'];
+  const allowed = ['text', 'startedAt', 'recurrence', 'trackStreak', 'done', 'completedDates', 'category'];
   for (const key of allowed) {
     if (Object.prototype.hasOwnProperty.call(req.body || {}, key)) data[key] = req.body[key];
+  }
+  if (Object.prototype.hasOwnProperty.call(data, 'category')) {
+    data.category = sanitizeCategory(data.category);
   }
 
   // Tracking only makes sense for daily recurrence; enforce server-side.
@@ -91,6 +101,7 @@ router.post('/import', async (req, res) => {
       startedAt: t.startedAt || new Date().toISOString(),
       recurrence: t.recurrence || null,
       trackStreak: !!(t.recurrence && t.recurrence.type === 'daily' && t.trackStreak),
+      category: sanitizeCategory(t.category),
       done: !!t.done,
       completedDates: Array.isArray(t.completedDates) ? t.completedDates.slice(0, 3650) : [],
     },

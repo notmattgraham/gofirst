@@ -32,6 +32,8 @@ model Task {
   recurrence      Json?
   // Only meaningful when recurrence.type === 'daily'. If true, shows on Streaks tab.
   trackStreak     Boolean  @default(false)
+  // One of: Family, Fitness, Career, Self-Improvement, Other. Drives analytics breakdown.
+  category        String?
   // For one-shot tasks only (recurrence === null).
   done            Boolean  @default(false)
   // For recurring tasks: local-date strings (YYYY-MM-DD) the task was completed on.
