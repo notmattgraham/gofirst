@@ -1,0 +1,1623 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no" />
+<meta name="theme-color" content="#0f1115" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="GoFirst" />
+<link rel="manifest" href="manifest.json" />
+<link rel="apple-touch-icon" href="apple-touch-icon.png" />
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png" />
+<link rel="icon" type="image/png" sizes="512x512" href="icon-512.png" />
+<title>GoFirst</title>
+<style>
+  :root {
+    --bg: #0f1115;
+    --bg-elev: #171a21;
+    --surface: #1c2029;
+    --surface-2: #242834;
+    --border: #2a2f3a;
+    --text: #e7e9ee;
+    --text-dim: #8a909c;
+    --text-faint: #5a5f6a;
+    --accent: #6366f1;
+    --accent-hover: #4f46e5;
+    --accent-dim: rgba(99, 102, 241, 0.18);
+    --danger: #ef4444;
+    --success: #10b981;
+    --warn: #f59e0b;
+    --radius: 14px;
+    --radius-lg: 18px;
+    --tap: 44px;
+    --safe-top: env(safe-area-inset-top, 0px);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+    --nav-h: 64px;
+  }
+
+  @media (prefers-color-scheme: light) {
+    :root {
+      --bg: #f4f6fa;
+      --bg-elev: #ffffff;
+      --surface: #ffffff;
+      --surface-2: #f0f2f7;
+      --border: #e4e7ee;
+      --text: #1a1d25;
+      --text-dim: #6b7280;
+      --text-faint: #9ca3af;
+      --accent: #6366f1;
+      --accent-hover: #4f46e5;
+      --accent-dim: rgba(99, 102, 241, 0.12);
+      --danger: #dc2626;
+      --success: #059669;
+      --warn: #d97706;
+    }
+  }
+
+  * {
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    overflow: hidden;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    font-size: 16px;
+    line-height: 1.45;
+    overscroll-behavior: none;
+  }
+
+  .app {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    max-width: 480px;
+    margin: 0 auto;
+    background: var(--bg);
+  }
+
+  @media (min-width: 520px) {
+    .app {
+      border-left: 1px solid var(--border);
+      border-right: 1px solid var(--border);
+    }
+  }
+
+  /* --- Top header ---------------------------------------------- */
+  .top {
+    flex-shrink: 0;
+    padding: calc(var(--safe-top) + 14px) 18px 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .brand {
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+  }
+  .brand .dot { color: var(--accent); }
+
+  .top-action {
+    height: 36px;
+    padding: 0 14px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .top-action:active { background: var(--surface-2); }
+
+  /* --- Scrollable main ----------------------------------------- */
+  .main {
+    flex: 1;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 12px 14px calc(var(--nav-h) + var(--safe-bottom) + 96px);
+  }
+
+  .view { display: none; }
+  .view.active { display: block; }
+
+  .section-title {
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-dim);
+    margin: 18px 6px 8px;
+  }
+  .section-title:first-child { margin-top: 4px; }
+
+  /* --- Cards & list rows --------------------------------------- */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+
+  .list { list-style: none; margin: 0; padding: 0; }
+
+  .row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 10px 10px 14px;
+    min-height: var(--tap);
+    border-bottom: 1px solid var(--border);
+  }
+  .row:last-child { border-bottom: none; }
+  .row:active { background: var(--surface-2); }
+
+  .check {
+    flex-shrink: 0;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    border: 2px solid var(--border);
+    background: transparent;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    transition: background 0.15s, border-color 0.15s;
+  }
+  .check.done {
+    background: var(--success);
+    border-color: var(--success);
+  }
+  .check.done::after {
+    content: "";
+    width: 11px;
+    height: 6px;
+    border-left: 2px solid white;
+    border-bottom: 2px solid white;
+    transform: rotate(-45deg) translate(1px, -1px);
+  }
+
+  .row-body {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .row-text {
+    color: var(--text);
+    word-break: break-word;
+    font-size: 16px;
+  }
+  .row.done .row-text {
+    text-decoration: line-through;
+    color: var(--text-dim);
+  }
+
+  .row-sub {
+    font-size: 12px;
+    color: var(--text-faint);
+    margin-top: 2px;
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    padding: 1px 7px;
+    border-radius: 999px;
+    background: var(--surface-2);
+    color: var(--text-dim);
+    font-size: 11px;
+    font-weight: 600;
+  }
+  .badge.habit {
+    background: var(--accent-dim);
+    color: var(--accent);
+  }
+
+  .row-meta {
+    flex-shrink: 0;
+    font-size: 13px;
+    color: var(--text-dim);
+  }
+
+  .icon-btn {
+    flex-shrink: 0;
+    width: 36px;
+    height: 36px;
+    border: none;
+    background: transparent;
+    color: var(--text-faint);
+    border-radius: 8px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .icon-btn:active { background: var(--surface-2); color: var(--accent); }
+  .icon-btn.danger:active { color: var(--danger); }
+
+  .empty {
+    padding: 36px 20px;
+    text-align: center;
+    color: var(--text-dim);
+  }
+  .empty-title {
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--text);
+    margin-bottom: 4px;
+  }
+
+  /* --- Streak cards ------------------------------------------- */
+  .streak-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 16px 16px 14px;
+    margin-bottom: 12px;
+  }
+
+  .streak-head {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 8px;
+  }
+  .streak-name {
+    flex: 1;
+    font-size: 17px;
+    font-weight: 600;
+    word-break: break-word;
+    min-width: 0;
+  }
+  .streak-tag {
+    flex-shrink: 0;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    padding: 4px 9px;
+    border-radius: 999px;
+    background: var(--accent-dim);
+    color: var(--accent);
+  }
+  .streak-tag.quit {
+    background: rgba(245, 158, 11, 0.15);
+    color: var(--warn);
+  }
+
+  .streak-num {
+    font-size: 44px;
+    font-weight: 700;
+    line-height: 1;
+    color: var(--text);
+    letter-spacing: -0.02em;
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    margin-top: 4px;
+  }
+  .streak-num .fire { font-size: 28px; }
+  .streak-num .unit-inline {
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--text-dim);
+    margin-left: 2px;
+  }
+
+  .streak-sub {
+    font-size: 14px;
+    color: var(--text-dim);
+    margin-top: 4px;
+  }
+  .streak-meta {
+    font-size: 12px;
+    color: var(--text-faint);
+    margin-top: 8px;
+  }
+
+  .streak-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 14px;
+  }
+
+  .action-btn {
+    flex: 1;
+    padding: 12px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: var(--surface-2);
+    color: var(--text);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    min-height: 44px;
+  }
+  .action-btn:active { background: var(--border); }
+
+  .action-btn.primary {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: white;
+  }
+  .action-btn.primary:active { background: var(--accent-hover); }
+
+  .action-btn.success {
+    background: var(--success);
+    border-color: var(--success);
+    color: white;
+  }
+  .action-btn.ghost { background: transparent; }
+
+  /* --- Forms (streak + task options) --------------------------- */
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px;
+    margin-bottom: 14px;
+  }
+  .panel[hidden] { display: none; }
+
+  .field { margin-bottom: 10px; }
+  .field:last-of-type { margin-bottom: 0; }
+
+  .field-label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-bottom: 6px;
+  }
+
+  .field-input {
+    width: 100%;
+    padding: 12px 14px;
+    min-height: 44px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: var(--bg-elev);
+    color: var(--text);
+    font-size: 16px;
+    outline: none;
+    font-family: inherit;
+  }
+  .field-input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-dim);
+  }
+
+  .chip-row {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  .chip {
+    min-height: 36px;
+    padding: 8px 12px;
+    border: 1px solid var(--border);
+    background: var(--bg-elev);
+    color: var(--text);
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .chip.selected {
+    background: var(--accent-dim);
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+  .chip.day {
+    width: 38px;
+    height: 38px;
+    min-height: 38px;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+  }
+
+  .track-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    background: var(--bg-elev);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    min-height: 44px;
+    cursor: pointer;
+    user-select: none;
+  }
+  .track-copy {
+    flex: 1;
+    color: var(--text);
+    font-size: 14px;
+    font-weight: 500;
+  }
+  .track-copy small {
+    display: block;
+    font-size: 12px;
+    color: var(--text-dim);
+    font-weight: normal;
+    margin-top: 2px;
+  }
+  .switch {
+    position: relative;
+    width: 44px;
+    height: 26px;
+    flex-shrink: 0;
+  }
+  .switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+  }
+  .switch-slider {
+    position: absolute;
+    inset: 0;
+    background: var(--border);
+    border-radius: 999px;
+    transition: background 0.18s;
+    cursor: pointer;
+  }
+  .switch-slider::after {
+    content: "";
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 20px;
+    height: 20px;
+    background: white;
+    border-radius: 50%;
+    transition: transform 0.18s;
+  }
+  .switch input:checked + .switch-slider { background: var(--accent); }
+  .switch input:checked + .switch-slider::after { transform: translateX(18px); }
+
+  .form-actions { display: flex; gap: 8px; margin-top: 14px; }
+
+  /* --- Docked task input --------------------------------------- */
+  .dock-wrap {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: calc(var(--nav-h) + var(--safe-bottom));
+    background: var(--bg);
+    border-top: 1px solid var(--border);
+    max-width: 480px;
+    margin: 0 auto;
+  }
+  .dock-wrap[hidden] { display: none; }
+
+  .task-options {
+    padding: 12px 12px 4px;
+    border-bottom: 1px solid var(--border);
+  }
+  .task-options[hidden] { display: none; }
+
+  .dock {
+    padding: 10px 12px;
+    display: flex;
+    gap: 8px;
+  }
+
+  .dock-toggle {
+    flex-shrink: 0;
+    width: 44px;
+    height: 44px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--surface);
+    color: var(--text-dim);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .dock-toggle.active {
+    background: var(--accent-dim);
+    color: var(--accent);
+    border-color: var(--accent);
+  }
+  .dock-toggle svg {
+    width: 20px;
+    height: 20px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .dock-input {
+    flex: 1;
+    padding: 12px 14px;
+    min-height: 44px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+    font-size: 16px;
+    outline: none;
+    font-family: inherit;
+  }
+  .dock-input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-dim);
+  }
+
+  .dock-send {
+    flex-shrink: 0;
+    width: 44px;
+    height: 44px;
+    border: none;
+    border-radius: 12px;
+    background: var(--accent);
+    color: white;
+    font-size: 24px;
+    font-weight: 500;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+  }
+  .dock-send:disabled {
+    background: var(--surface-2);
+    color: var(--text-faint);
+  }
+  .dock-send:active:not(:disabled) { background: var(--accent-hover); }
+
+  .dock-edit-banner {
+    padding: 8px 14px;
+    background: var(--accent-dim);
+    color: var(--accent);
+    font-size: 13px;
+    font-weight: 600;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .dock-edit-banner[hidden] { display: none; }
+  .dock-edit-banner button {
+    background: none;
+    border: none;
+    color: var(--accent);
+    font-weight: 600;
+    cursor: pointer;
+    font-size: 13px;
+    padding: 4px 8px;
+  }
+
+  /* --- Bottom tab bar ----------------------------------------- */
+  .tabbar {
+    flex-shrink: 0;
+    height: calc(var(--nav-h) + var(--safe-bottom));
+    padding-bottom: var(--safe-bottom);
+    background: var(--bg-elev);
+    border-top: 1px solid var(--border);
+    display: flex;
+  }
+
+  .tab {
+    flex: 1;
+    border: none;
+    background: transparent;
+    color: var(--text-dim);
+    font-size: 11px;
+    font-weight: 600;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    cursor: pointer;
+    padding-top: 4px;
+  }
+  .tab svg {
+    width: 24px;
+    height: 24px;
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  .tab.active { color: var(--accent); }
+
+  /* --- Animations --------------------------------------------- */
+  .row, .streak-card {
+    animation: slideIn 0.18s ease-out;
+  }
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(-4px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+</style>
+</head>
+<body>
+  <div class="app">
+    <header class="top">
+      <div class="brand">GoFirst<span class="dot">.</span></div>
+      <button class="top-action" id="top-action" hidden></button>
+    </header>
+
+    <main class="main" id="main">
+      <!-- To Do List view -->
+      <section id="view-todo" class="view active">
+        <div id="habits-wrap" hidden>
+          <div class="section-title">Today's habits</div>
+          <div class="card"><ul class="list" id="habits-list"></ul></div>
+        </div>
+
+        <div class="section-title">Tasks</div>
+        <div class="card">
+          <ul class="list" id="tasks-list"></ul>
+          <div class="empty" id="tasks-empty">
+            <div class="empty-title">Nothing on the list</div>
+            <div>Add a task below to get moving.</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Streaks view -->
+      <section id="view-streaks" class="view">
+        <form class="panel" id="streak-form" hidden autocomplete="off">
+          <div class="field">
+            <label class="field-label" for="s-name">What are you tracking?</label>
+            <input class="field-input" id="s-name" placeholder="e.g. Practice guitar" maxlength="60" />
+          </div>
+          <div class="field">
+            <span class="field-label">Type</span>
+            <div class="chip-row" id="s-type-toggle">
+              <button type="button" class="chip selected" data-type="doing">Doing daily</button>
+              <button type="button" class="chip" data-type="quit">Quit / avoiding</button>
+            </div>
+          </div>
+          <div class="field">
+            <label class="field-label" for="s-start">Start date &amp; time</label>
+            <input class="field-input" id="s-start" type="datetime-local" />
+          </div>
+          <div class="form-actions">
+            <button type="button" class="action-btn ghost" id="s-cancel">Cancel</button>
+            <button type="submit" class="action-btn primary" id="s-submit">Add streak</button>
+          </div>
+        </form>
+
+        <ul class="list" id="streaks-list"></ul>
+        <div class="empty card" id="streaks-empty">
+          <div class="empty-title">No streaks yet</div>
+          <div>Track a daily habit or something you've quit.</div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Docked new-task area: options panel + input bar -->
+    <div class="dock-wrap" id="dock-wrap">
+      <div class="dock-edit-banner" id="edit-banner" hidden>
+        <span id="edit-banner-text">Editing task</span>
+        <button type="button" id="edit-cancel">Cancel</button>
+      </div>
+
+      <div class="task-options" id="task-options" hidden>
+        <div class="field">
+          <span class="field-label">Repeat</span>
+          <div class="chip-row" id="repeat-toggle">
+            <button type="button" class="chip selected" data-repeat="none">Once</button>
+            <button type="button" class="chip" data-repeat="daily">Daily</button>
+            <button type="button" class="chip" data-repeat="weekly">Weekly</button>
+            <button type="button" class="chip" data-repeat="custom">Custom</button>
+          </div>
+        </div>
+
+        <div class="field" id="days-field" hidden>
+          <span class="field-label">Days of the week</span>
+          <div class="chip-row" id="days-toggle">
+            <button type="button" class="chip day" data-day="0">S</button>
+            <button type="button" class="chip day" data-day="1">M</button>
+            <button type="button" class="chip day" data-day="2">T</button>
+            <button type="button" class="chip day" data-day="3">W</button>
+            <button type="button" class="chip day" data-day="4">T</button>
+            <button type="button" class="chip day" data-day="5">F</button>
+            <button type="button" class="chip day" data-day="6">S</button>
+          </div>
+        </div>
+
+        <div class="field" id="track-field" hidden>
+          <span class="field-label">Tracking</span>
+          <label class="track-row" for="track-toggle">
+            <span class="track-copy">
+              Track this habit
+              <small>Show it on the Streaks tab and count days in a row.</small>
+            </span>
+            <span class="switch">
+              <input type="checkbox" id="track-toggle" />
+              <span class="switch-slider"></span>
+            </span>
+          </label>
+        </div>
+      </div>
+
+      <form class="dock" id="task-form" autocomplete="off">
+        <button type="button" class="dock-toggle" id="dock-toggle" aria-label="Task options">
+          <svg viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="9"/>
+            <path d="M12 7v5l3 2"/>
+          </svg>
+        </button>
+        <input
+          class="dock-input"
+          id="task-input"
+          placeholder="New task"
+          inputmode="text"
+          maxlength="240"
+          aria-label="New task"
+        />
+        <button class="dock-send" id="task-submit" type="submit" disabled aria-label="Add task">+</button>
+      </form>
+    </div>
+
+    <nav class="tabbar">
+      <button class="tab active" data-tab="todo">
+        <svg viewBox="0 0 24 24">
+          <rect x="3" y="5" width="18" height="14" rx="2"/>
+          <path d="M7 10l2 2 4-4"/>
+          <path d="M14 14h4"/>
+        </svg>
+        To Do List
+      </button>
+      <button class="tab" data-tab="streaks">
+        <svg viewBox="0 0 24 24">
+          <path d="M12 3c.5 2 2 3 2 5a2 2 0 1 1-4 0c0-.7.3-1.3.8-2"/>
+          <path d="M12 22a7 7 0 0 0 7-7c0-3.3-2-5-3-7.5 0 2.5-1.2 3.7-3 4.5-1.8-.8-3-2-3-4.5-1 2.5-3 4.2-3 7.5a7 7 0 0 0 5 7z"/>
+        </svg>
+        Streaks
+      </button>
+    </nav>
+  </div>
+
+<script>
+'use strict';
+
+/* ============================================================
+   Storage layer — localStorage adapter. Persists across page
+   refreshes AND re-deployments of the same origin. Swap this
+   module later for a cloud-sync adapter without touching the UI.
+   ============================================================ */
+const DB_KEY = 'gofirst:v1';
+
+function migrateTask(t) {
+  return {
+    id: t.id,
+    text: t.text || '',
+    createdAt: t.createdAt || Date.now(),
+    startedAt: t.startedAt || isoFromMs(t.createdAt || Date.now()),
+    recurrence: t.recurrence || null,
+    trackStreak: !!t.trackStreak,
+    done: !!t.done,
+    completedDates: Array.isArray(t.completedDates) ? t.completedDates.slice() : [],
+  };
+}
+
+function loadState() {
+  const defaults = { schema: 2, tasks: [], streaks: [] };
+  try {
+    const raw = localStorage.getItem(DB_KEY);
+    if (!raw) return defaults;
+    const p = JSON.parse(raw);
+
+    let tasks = Array.isArray(p.tasks) ? p.tasks.map(migrateTask) : [];
+    let streaks = [];
+
+    // Old schema had doing-streaks as their own entity; fold them into tasks.
+    for (const s of (Array.isArray(p.streaks) ? p.streaks : [])) {
+      if (s && s.type === 'doing') {
+        tasks.push(migrateTask({
+          id: s.id,
+          text: s.name,
+          createdAt: s.createdAt,
+          startedAt: s.startAt || (s.startDate ? s.startDate + 'T00:00' : undefined),
+          recurrence: { type: 'daily', daysOfWeek: [0,1,2,3,4,5,6] },
+          trackStreak: true,
+          completedDates: s.completedDates || [],
+        }));
+      } else if (s && s.type === 'quit') {
+        streaks.push({
+          id: s.id,
+          name: s.name,
+          type: 'quit',
+          startAt: s.startAt || (s.startDate ? s.startDate + 'T00:00' : nowLocalDT()),
+          createdAt: s.createdAt || Date.now(),
+        });
+      }
+    }
+
+    return { schema: 2, tasks, streaks };
+  } catch (e) {
+    console.warn('load failed', e);
+    return defaults;
+  }
+}
+
+function saveState(s) {
+  try { localStorage.setItem(DB_KEY, JSON.stringify(s)); }
+  catch (e) { console.warn('save failed', e); }
+}
+
+/* ============================================================
+   Date helpers
+   ============================================================ */
+function pad(n) { return String(n).padStart(2, '0'); }
+function toISO(d) { return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`; }
+function todayISO() { return toISO(new Date()); }
+function todayDow() { return new Date().getDay(); } // 0..6, Sun..Sat
+function addDaysISO(iso, n) {
+  const d = new Date(iso + 'T00:00:00');
+  d.setDate(d.getDate() + n);
+  return toISO(d);
+}
+function daysBetween(aISO, bISO) {
+  const a = new Date(aISO + 'T00:00:00');
+  const b = new Date(bISO + 'T00:00:00');
+  return Math.round((b - a) / 86400000);
+}
+function toLocalDT(d) {
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+function nowLocalDT() { return toLocalDT(new Date()); }
+function isoFromMs(ms) { return toLocalDT(new Date(ms)); }
+function fmtDateOnly(s) {
+  try {
+    const d = new Date(/T/.test(s) ? s : s + 'T00:00:00');
+    return d.toLocaleDateString(undefined, { month:'short', day:'numeric', year:'numeric' });
+  } catch { return s; }
+}
+function fmtDateTime(s) {
+  try {
+    const d = new Date(/T/.test(s) ? s : s + 'T00:00:00');
+    return d.toLocaleString(undefined, { month:'short', day:'numeric', year:'numeric', hour:'numeric', minute:'2-digit' });
+  } catch { return s; }
+}
+function uid() {
+  return (crypto.randomUUID && crypto.randomUUID()) || (Date.now() + '-' + Math.random().toString(36).slice(2));
+}
+
+const DAY_LONG = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+const DAY_SHORT = ['Su','M','T','W','Th','F','Sa'];
+
+function scheduleLabel(recurrence) {
+  if (!recurrence) return '';
+  const days = recurrence.daysOfWeek || [];
+  if (recurrence.type === 'daily' || days.length === 7) return 'Every day';
+  if (days.length === 0) return '';
+  if (days.length === 1) return 'Weekly · ' + DAY_LONG[days[0]];
+  return days.slice().sort().map(d => DAY_SHORT[d]).join(' · ');
+}
+
+function scheduledToday(task) {
+  if (!task.recurrence) return true; // one-shot always shows until deleted
+  const days = task.recurrence.daysOfWeek || [];
+  return days.includes(todayDow());
+}
+
+function isDoneToday(task) {
+  if (!task.recurrence) return task.done;
+  return task.completedDates.includes(todayISO());
+}
+
+/* ============================================================
+   Streak math
+   ============================================================ */
+function doingStreak(completedDates) {
+  if (!completedDates || !completedDates.length) return 0;
+  const set = new Set(completedDates);
+  const today = todayISO();
+  const yest = addDaysISO(today, -1);
+  let cursor = set.has(today) ? today : (set.has(yest) ? yest : null);
+  if (!cursor) return 0;
+  let count = 0;
+  while (set.has(cursor)) { count++; cursor = addDaysISO(cursor, -1); }
+  return count;
+}
+function bestStreak(completedDates) {
+  if (!completedDates || !completedDates.length) return 0;
+  const sorted = [...completedDates].sort();
+  let best = 1, cur = 1;
+  for (let i = 1; i < sorted.length; i++) {
+    if (daysBetween(sorted[i-1], sorted[i]) === 1) { cur++; if (cur > best) best = cur; }
+    else cur = 1;
+  }
+  return best;
+}
+function quitElapsed(startAt) {
+  const startMs = new Date(startAt).getTime();
+  if (isNaN(startMs)) return { days: 0, hours: 0, totalMs: 0 };
+  const diff = Math.max(0, Date.now() - startMs);
+  const days = Math.floor(diff / 86400000);
+  const hours = Math.floor((diff % 86400000) / 3600000);
+  return { days, hours, totalMs: diff };
+}
+
+/* ============================================================
+   Store — single source of truth.
+   ============================================================ */
+const Store = (() => {
+  let state = loadState();
+  const listeners = new Set();
+  const emit = () => { saveState(state); listeners.forEach(fn => fn(state)); };
+
+  return {
+    get() { return state; },
+    subscribe(fn) { listeners.add(fn); fn(state); return () => listeners.delete(fn); },
+
+    addTask({ text, recurrence, trackStreak, startedAt }) {
+      const t = (text || '').trim();
+      if (!t) return null;
+      const nowMs = Date.now();
+      const task = {
+        id: uid(),
+        text: t,
+        createdAt: nowMs,
+        startedAt: startedAt || isoFromMs(nowMs),
+        recurrence: recurrence || null,
+        trackStreak: !!(recurrence && recurrence.type === 'daily' && trackStreak),
+        done: false,
+        completedDates: [],
+      };
+      state = { ...state, tasks: [task, ...state.tasks] };
+      emit();
+      return task;
+    },
+
+    updateTask(id, updates) {
+      state = {
+        ...state,
+        tasks: state.tasks.map(t => {
+          if (t.id !== id) return t;
+          const next = { ...t, ...updates };
+          // If recurrence changed away from daily, tracking should be off.
+          if (next.recurrence && next.recurrence.type !== 'daily') next.trackStreak = false;
+          if (!next.recurrence) next.trackStreak = false;
+          return next;
+        }),
+      };
+      emit();
+    },
+
+    toggleTaskToday(id) {
+      state = {
+        ...state,
+        tasks: state.tasks.map(t => {
+          if (t.id !== id) return t;
+          if (!t.recurrence) return { ...t, done: !t.done };
+          const today = todayISO();
+          const has = t.completedDates.includes(today);
+          return { ...t, completedDates: has
+            ? t.completedDates.filter(d => d !== today)
+            : [...t.completedDates, today] };
+        }),
+      };
+      emit();
+    },
+
+    removeTask(id) {
+      state = { ...state, tasks: state.tasks.filter(t => t.id !== id) };
+      emit();
+    },
+
+    addQuit({ name, startAt }) {
+      const n = (name || '').trim();
+      if (!n) return null;
+      const s = {
+        id: uid(),
+        name: n,
+        type: 'quit',
+        startAt: startAt || nowLocalDT(),
+        createdAt: Date.now(),
+      };
+      state = { ...state, streaks: [s, ...state.streaks] };
+      emit();
+      return s;
+    },
+
+    updateStreak(id, updates) {
+      state = {
+        ...state,
+        streaks: state.streaks.map(s => s.id === id ? { ...s, ...updates } : s),
+      };
+      emit();
+    },
+
+    resetQuit(id) {
+      state = { ...state, streaks: state.streaks.map(s =>
+        s.id === id && s.type === 'quit' ? { ...s, startAt: nowLocalDT() } : s
+      ) };
+      emit();
+    },
+
+    removeStreak(id) {
+      state = { ...state, streaks: state.streaks.filter(s => s.id !== id) };
+      emit();
+    },
+  };
+})();
+
+/* ============================================================
+   View
+   ============================================================ */
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+const trashIcon = `
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/>
+    <line x1="10" y1="11" x2="10" y2="17"/>
+    <line x1="14" y1="11" x2="14" y2="17"/>
+  </svg>`;
+const pencilIcon = `
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M12 20h9"/>
+    <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
+  </svg>`;
+
+const els = {
+  tabs: document.querySelectorAll('.tab'),
+  views: {
+    todo: document.getElementById('view-todo'),
+    streaks: document.getElementById('view-streaks'),
+  },
+  habitsWrap: document.getElementById('habits-wrap'),
+  habitsList: document.getElementById('habits-list'),
+  tasksList: document.getElementById('tasks-list'),
+  tasksEmpty: document.getElementById('tasks-empty'),
+  streaksList: document.getElementById('streaks-list'),
+  streaksEmpty: document.getElementById('streaks-empty'),
+
+  // Task dock / options
+  dockWrap: document.getElementById('dock-wrap'),
+  taskForm: document.getElementById('task-form'),
+  taskInput: document.getElementById('task-input'),
+  taskSubmit: document.getElementById('task-submit'),
+  dockToggle: document.getElementById('dock-toggle'),
+  taskOptions: document.getElementById('task-options'),
+  repeatToggle: document.getElementById('repeat-toggle'),
+  daysField: document.getElementById('days-field'),
+  daysToggle: document.getElementById('days-toggle'),
+  trackField: document.getElementById('track-field'),
+  trackInput: document.getElementById('track-toggle'),
+  editBanner: document.getElementById('edit-banner'),
+  editBannerText: document.getElementById('edit-banner-text'),
+  editCancel: document.getElementById('edit-cancel'),
+
+  // Streak form
+  topAction: document.getElementById('top-action'),
+  streakForm: document.getElementById('streak-form'),
+  sName: document.getElementById('s-name'),
+  sStart: document.getElementById('s-start'),
+  sTypeToggle: document.getElementById('s-type-toggle'),
+  sCancel: document.getElementById('s-cancel'),
+  sSubmit: document.getElementById('s-submit'),
+};
+
+/* ---- Task form state (new or edit) ---- */
+const TaskForm = {
+  editingId: null,
+  repeat: 'none',       // 'none' | 'daily' | 'weekly' | 'custom'
+  daysOfWeek: [],       // for 'weekly' (single) and 'custom' (many)
+  track: false,
+
+  reset() {
+    this.editingId = null;
+    this.repeat = 'none';
+    this.daysOfWeek = [];
+    this.track = false;
+    els.taskInput.value = '';
+    els.taskSubmit.disabled = true;
+    els.taskSubmit.textContent = '+';
+    this.renderChips();
+    this.applyVisibility();
+    els.editBanner.hidden = true;
+  },
+
+  loadFromTask(task) {
+    this.editingId = task.id;
+    els.taskInput.value = task.text;
+    els.taskSubmit.disabled = !task.text.trim();
+    els.taskSubmit.textContent = '✓';
+    if (task.recurrence) {
+      this.repeat = task.recurrence.type;
+      this.daysOfWeek = (task.recurrence.daysOfWeek || []).slice();
+    } else {
+      this.repeat = 'none';
+      this.daysOfWeek = [];
+    }
+    this.track = !!task.trackStreak;
+    els.trackInput.checked = this.track;
+    this.renderChips();
+    this.applyVisibility();
+    els.editBannerText.textContent = 'Editing task';
+    els.editBanner.hidden = false;
+    els.taskOptions.hidden = false;
+    els.dockToggle.classList.add('active');
+  },
+
+  renderChips() {
+    els.repeatToggle.querySelectorAll('.chip').forEach(c =>
+      c.classList.toggle('selected', c.dataset.repeat === this.repeat));
+    els.daysToggle.querySelectorAll('.chip').forEach(c =>
+      c.classList.toggle('selected', this.daysOfWeek.includes(Number(c.dataset.day))));
+  },
+
+  applyVisibility() {
+    els.daysField.hidden = !(this.repeat === 'weekly' || this.repeat === 'custom');
+    els.trackField.hidden = this.repeat !== 'daily';
+    if (this.repeat !== 'daily') this.track = false;
+    els.trackInput.checked = this.track;
+  },
+
+  setRepeat(type) {
+    this.repeat = type;
+    if (type === 'none') this.daysOfWeek = [];
+    if (type === 'daily') this.daysOfWeek = [0,1,2,3,4,5,6];
+    if (type === 'weekly') {
+      // default to today's weekday if none picked
+      if (!this.daysOfWeek.length) this.daysOfWeek = [todayDow()];
+      else this.daysOfWeek = this.daysOfWeek.slice(0, 1);
+    }
+    if (type === 'custom' && !this.daysOfWeek.length) this.daysOfWeek = [todayDow()];
+    this.renderChips();
+    this.applyVisibility();
+  },
+
+  toggleDay(day) {
+    if (this.repeat === 'weekly') {
+      this.daysOfWeek = [day];
+    } else if (this.repeat === 'custom') {
+      const idx = this.daysOfWeek.indexOf(day);
+      if (idx === -1) this.daysOfWeek.push(day);
+      else this.daysOfWeek.splice(idx, 1);
+      this.daysOfWeek.sort();
+    }
+    this.renderChips();
+  },
+
+  toRecurrence() {
+    if (this.repeat === 'none') return null;
+    if (this.repeat === 'daily') return { type: 'daily', daysOfWeek: [0,1,2,3,4,5,6] };
+    const days = this.daysOfWeek.slice().sort();
+    if (!days.length) return null;
+    return { type: this.repeat, daysOfWeek: days };
+  },
+};
+
+/* ---- Streak form state (new or edit) ---- */
+const StreakForm = {
+  editingId: null,       // id of quit streak being edited, OR task id for tracked habit
+  editingKind: null,     // 'quit' | 'habit'
+  type: 'doing',         // 'doing' | 'quit'
+
+  open({ editing = null } = {}) {
+    els.streakForm.hidden = false;
+    if (editing) {
+      this.editingId = editing.id;
+      this.editingKind = editing.kind;
+      this.type = editing.kind === 'habit' ? 'doing' : 'quit';
+      els.sName.value = editing.name;
+      els.sStart.value = editing.startAt;
+      els.sSubmit.textContent = 'Save changes';
+    } else {
+      this.editingId = null;
+      this.editingKind = null;
+      this.type = 'doing';
+      els.sName.value = '';
+      els.sStart.value = nowLocalDT();
+      els.sSubmit.textContent = 'Add streak';
+    }
+    this.renderType();
+    setTopAction();
+    setTimeout(() => els.sName.focus(), 50);
+  },
+
+  close() {
+    els.streakForm.hidden = true;
+    this.editingId = null;
+    this.editingKind = null;
+    setTopAction();
+  },
+
+  setType(t) {
+    this.type = t;
+    this.renderType();
+  },
+
+  renderType() {
+    els.sTypeToggle.querySelectorAll('.chip').forEach(c =>
+      c.classList.toggle('selected', c.dataset.type === this.type));
+  },
+};
+
+/* ---- Top-action label ---- */
+let currentTab = 'todo';
+function setTopAction() {
+  if (currentTab === 'streaks') {
+    els.topAction.hidden = false;
+    els.topAction.textContent = els.streakForm.hidden ? '+ New streak' : 'Close';
+  } else {
+    els.topAction.hidden = true;
+  }
+}
+function setTab(name) {
+  currentTab = name;
+  els.tabs.forEach(t => t.classList.toggle('active', t.dataset.tab === name));
+  Object.entries(els.views).forEach(([k, el]) => el.classList.toggle('active', k === name));
+  els.dockWrap.hidden = name !== 'todo';
+  setTopAction();
+}
+
+/* ---- Rendering ---- */
+function renderTasksView(state) {
+  const today = todayISO();
+
+  // Tracked habits that are scheduled today (daily = always)
+  const habits = state.tasks.filter(t =>
+    t.recurrence && t.recurrence.type === 'daily' && t.trackStreak && scheduledToday(t)
+  );
+  els.habitsWrap.hidden = habits.length === 0;
+  if (habits.length) {
+    els.habitsList.innerHTML = habits.map(t => {
+      const done = isDoneToday(t);
+      const streak = doingStreak(t.completedDates);
+      return `
+        <li class="row ${done ? 'done' : ''}" data-task-id="${t.id}">
+          <button class="check ${done ? 'done' : ''}" data-action="task-toggle" aria-label="Mark done today"></button>
+          <div class="row-body"><div class="row-text">${esc(t.text)}</div></div>
+          ${streak > 0 ? `<span class="row-meta">🔥 ${streak}</span>` : ''}
+          <button class="icon-btn" data-action="task-edit" aria-label="Edit habit">${pencilIcon}</button>
+        </li>`;
+    }).join('');
+  }
+
+  // Regular tasks: one-shots + non-tracked recurring scheduled today
+  const tasks = state.tasks
+    .filter(t => !(t.recurrence && t.recurrence.type === 'daily' && t.trackStreak))
+    .filter(t => scheduledToday(t))
+    .sort((a, b) => {
+      const ad = isDoneToday(a) ? 1 : 0;
+      const bd = isDoneToday(b) ? 1 : 0;
+      if (ad !== bd) return ad - bd; // done to the bottom
+      return b.createdAt - a.createdAt;
+    });
+
+  if (tasks.length === 0) {
+    els.tasksList.innerHTML = '';
+    els.tasksEmpty.style.display = 'block';
+  } else {
+    els.tasksEmpty.style.display = 'none';
+    els.tasksList.innerHTML = tasks.map(t => {
+      const done = isDoneToday(t);
+      const schedule = scheduleLabel(t.recurrence);
+      const sub = schedule ? `<div class="row-sub"><span class="badge">↻ ${esc(schedule)}</span></div>` : '';
+      const editBtn = t.recurrence
+        ? `<button class="icon-btn" data-action="task-edit" aria-label="Edit task">${pencilIcon}</button>`
+        : '';
+      return `
+        <li class="row ${done ? 'done' : ''}" data-task-id="${t.id}">
+          <button class="check ${done ? 'done' : ''}" data-action="task-toggle" aria-label="Mark done"></button>
+          <div class="row-body">
+            <div class="row-text">${esc(t.text)}</div>
+            ${sub}
+          </div>
+          ${editBtn}
+          <button class="icon-btn danger" data-action="task-delete" aria-label="Delete task">${trashIcon}</button>
+        </li>`;
+    }).join('');
+  }
+}
+
+function renderStreaksView(state) {
+  const tracked = state.tasks.filter(t =>
+    t.recurrence && t.recurrence.type === 'daily' && t.trackStreak
+  );
+  const quits = state.streaks.filter(s => s.type === 'quit');
+
+  if (tracked.length === 0 && quits.length === 0) {
+    els.streaksList.innerHTML = '';
+    els.streaksEmpty.style.display = 'block';
+    return;
+  }
+  els.streaksEmpty.style.display = 'none';
+
+  const today = todayISO();
+
+  const trackedHTML = tracked
+    .sort((a, b) => b.createdAt - a.createdAt)
+    .map(t => {
+      const streak = doingStreak(t.completedDates);
+      const best = bestStreak(t.completedDates);
+      const doneToday = t.completedDates.includes(today);
+      return `
+        <li class="streak-card" data-kind="habit" data-id="${t.id}">
+          <div class="streak-head">
+            <div class="streak-name">${esc(t.text)}</div>
+            <div class="streak-tag">Daily</div>
+            <button class="icon-btn" data-action="edit" aria-label="Edit">${pencilIcon}</button>
+            <button class="icon-btn danger" data-action="delete" aria-label="Delete">${trashIcon}</button>
+          </div>
+          <div class="streak-num"><span class="fire">🔥</span>${streak}</div>
+          <div class="streak-sub">${streak === 1 ? 'day in a row' : 'days in a row'}</div>
+          <div class="streak-meta">Best: ${best} · Since ${fmtDateOnly(t.startedAt)}</div>
+          <div class="streak-actions">
+            <button class="action-btn ${doneToday ? 'success' : 'primary'}" data-action="check-in">
+              ${doneToday ? '✓ Done today' : 'Check in today'}
+            </button>
+          </div>
+        </li>`;
+    }).join('');
+
+  const quitHTML = quits.map(s => {
+    const { days, hours } = quitElapsed(s.startAt);
+    const big = days >= 1 ? days : hours;
+    const unit = days >= 1
+      ? (days === 1 ? 'day free' : 'days free')
+      : (hours === 1 ? 'hour free' : 'hours free');
+    const meta = days >= 1 && hours > 0
+      ? `${hours}h in · Since ${fmtDateTime(s.startAt)}`
+      : `Since ${fmtDateTime(s.startAt)}`;
+    return `
+      <li class="streak-card" data-kind="quit" data-id="${s.id}">
+        <div class="streak-head">
+          <div class="streak-name">${esc(s.name)}</div>
+          <div class="streak-tag quit">Quit</div>
+          <button class="icon-btn" data-action="edit" aria-label="Edit">${pencilIcon}</button>
+          <button class="icon-btn danger" data-action="delete" aria-label="Delete">${trashIcon}</button>
+        </div>
+        <div class="streak-num">${big}</div>
+        <div class="streak-sub">${unit}</div>
+        <div class="streak-meta">${meta}</div>
+        <div class="streak-actions">
+          <button class="action-btn" data-action="quit-reset">I slipped — reset</button>
+        </div>
+      </li>`;
+  }).join('');
+
+  els.streaksList.innerHTML = trackedHTML + quitHTML;
+}
+
+function render(state) {
+  renderTasksView(state);
+  renderStreaksView(state);
+}
+
+/* ============================================================
+   Events
+   ============================================================ */
+
+// --- Tab bar ---
+els.tabs.forEach(btn => btn.addEventListener('click', () => setTab(btn.dataset.tab)));
+
+// --- Top action (new streak / close) ---
+els.topAction.addEventListener('click', () => {
+  if (currentTab !== 'streaks') return;
+  if (els.streakForm.hidden) StreakForm.open();
+  else StreakForm.close();
+});
+
+// --- Task dock: options toggle ---
+els.dockToggle.addEventListener('click', () => {
+  const show = els.taskOptions.hidden;
+  els.taskOptions.hidden = !show;
+  els.dockToggle.classList.toggle('active', show);
+});
+
+// --- Task dock: input enable/disable submit ---
+els.taskInput.addEventListener('input', () => {
+  els.taskSubmit.disabled = els.taskInput.value.trim().length === 0;
+});
+
+// --- Repeat chips ---
+els.repeatToggle.addEventListener('click', (e) => {
+  const c = e.target.closest('.chip');
+  if (!c) return;
+  TaskForm.setRepeat(c.dataset.repeat);
+});
+
+// --- Days chips ---
+els.daysToggle.addEventListener('click', (e) => {
+  const c = e.target.closest('.chip');
+  if (!c) return;
+  TaskForm.toggleDay(Number(c.dataset.day));
+});
+
+// --- Track switch ---
+els.trackInput.addEventListener('change', () => {
+  TaskForm.track = els.trackInput.checked;
+});
+
+// --- Task form submit (add or edit) ---
+els.taskForm.addEventListener('submit', (e) => {
+  e.preventDefault();
+  const text = els.taskInput.value.trim();
+  if (!text) return;
+
+  const recurrence = TaskForm.toRecurrence();
+  const updates = { text, recurrence, trackStreak: TaskForm.track };
+
+  if (TaskForm.editingId) {
+    Store.updateTask(TaskForm.editingId, updates);
+  } else {
+    Store.addTask({ text, recurrence, trackStreak: TaskForm.track });
+  }
+
+  TaskForm.reset();
+  els.taskOptions.hidden = true;
+  els.dockToggle.classList.remove('active');
+});
+
+els.editCancel.addEventListener('click', () => {
+  TaskForm.reset();
+  els.taskOptions.hidden = true;
+  els.dockToggle.classList.remove('active');
+});
+
+// --- Delegated clicks on To Do list ---
+els.views.todo.addEventListener('click', (e) => {
+  const btn = e.target.closest('[data-action]');
+  if (!btn) return;
+  const action = btn.dataset.action;
+  const row = btn.closest('[data-task-id]');
+  if (!row) return;
+  const id = row.dataset.taskId;
+  if (action === 'task-toggle') Store.toggleTaskToday(id);
+  if (action === 'task-delete') {
+    if (confirm('Delete this task?')) Store.removeTask(id);
+  }
+  if (action === 'task-edit') {
+    const task = Store.get().tasks.find(t => t.id === id);
+    if (!task) return;
+    TaskForm.loadFromTask(task);
+    els.taskInput.focus();
+    els.main.scrollTop = els.main.scrollHeight;
+  }
+});
+
+// --- Delegated clicks on Streaks cards ---
+els.views.streaks.addEventListener('click', (e) => {
+  const btn = e.target.closest('[data-action]');
+  if (!btn) return;
+  const card = btn.closest('[data-id]');
+  if (!card) return;
+  const id = card.dataset.id;
+  const kind = card.dataset.kind; // 'habit' | 'quit'
+  const action = btn.dataset.action;
+
+  if (action === 'check-in' && kind === 'habit') {
+    Store.toggleTaskToday(id);
+  }
+  if (action === 'quit-reset' && kind === 'quit') {
+    if (confirm('Reset the counter to right now? Your current streak will be replaced.')) Store.resetQuit(id);
+  }
+  if (action === 'delete') {
+    const msg = kind === 'quit'
+      ? 'Delete this streak? This cannot be undone.'
+      : 'Delete this habit? This will remove the task and its streak history.';
+    if (confirm(msg)) {
+      if (kind === 'quit') Store.removeStreak(id);
+      else Store.removeTask(id);
+    }
+  }
+  if (action === 'edit') {
+    if (kind === 'quit') {
+      const s = Store.get().streaks.find(x => x.id === id);
+      if (!s) return;
+      StreakForm.open({ editing: { id, kind: 'quit', name: s.name, startAt: s.startAt } });
+    } else {
+      const t = Store.get().tasks.find(x => x.id === id);
+      if (!t) return;
+      StreakForm.open({ editing: { id, kind: 'habit', name: t.text, startAt: t.startedAt } });
+    }
+  }
+});
+
+// --- Streak type toggle ---
+els.sTypeToggle.addEventListener('click', (e) => {
+  const c = e.target.closest('.chip');
+  if (!c) return;
+  StreakForm.setType(c.dataset.type);
+});
+
+els.sCancel.addEventListener('click', () => StreakForm.close());
+
+// --- Streak form submit (add / edit) ---
+els.streakForm.addEventListener('submit', (e) => {
+  e.preventDefault();
+  const name = els.sName.value.trim();
+  if (!name) { els.sName.focus(); return; }
+  const startAt = els.sStart.value || nowLocalDT();
+  const type = StreakForm.type;
+
+  if (StreakForm.editingId) {
+    if (StreakForm.editingKind === 'quit' && type === 'quit') {
+      Store.updateStreak(StreakForm.editingId, { name, startAt });
+    } else if (StreakForm.editingKind === 'habit' && type === 'doing') {
+      Store.updateTask(StreakForm.editingId, { text: name, startedAt: startAt });
+    } else if (StreakForm.editingKind === 'quit' && type === 'doing') {
+      // Convert quit → tracked habit
+      Store.removeStreak(StreakForm.editingId);
+      Store.addTask({
+        text: name,
+        recurrence: { type: 'daily', daysOfWeek: [0,1,2,3,4,5,6] },
+        trackStreak: true,
+        startedAt: startAt,
+      });
+    } else if (StreakForm.editingKind === 'habit' && type === 'quit') {
+      // Convert tracked habit → quit streak
+      Store.removeTask(StreakForm.editingId);
+      Store.addQuit({ name, startAt });
+    }
+  } else {
+    if (type === 'quit') {
+      Store.addQuit({ name, startAt });
+    } else {
+      Store.addTask({
+        text: name,
+        recurrence: { type: 'daily', daysOfWeek: [0,1,2,3,4,5,6] },
+        trackStreak: true,
+        startedAt: startAt,
+      });
+    }
+  }
+
+  StreakForm.close();
+});
+
+// --- Re-render when the app comes back to foreground (midnight rollover,
+//     or quit-streak hour ticking over) ---
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden) render(Store.get());
+});
+
+// Periodic refresh for quit-streak time-of-day displays
+setInterval(() => {
+  if (!document.hidden && currentTab === 'streaks') render(Store.get());
+}, 60000);
+
+// Wire store → view
+Store.subscribe(render);
+
+// Init
+setTab('todo');
+TaskForm.reset();
+
+// PWA: register service worker so the app installs to the home screen
+// and still opens when offline. Only on https:// or localhost; skipped
+// on file:// (opening index.html directly from disk).
+if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1')) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch((err) => console.warn('SW registration failed', err));
+  });
+}
+</script>
+</body>
+</html>
