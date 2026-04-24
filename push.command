@@ -6,60 +6,32 @@ echo ""
 
 rm -f .git/*.lock 2>/dev/null
 
-echo "Staging changes..."
+# Make sure everything is committed
 git add -A
-
-if git diff --cached --quiet 2>/dev/null; then
-  echo "(nothing new to commit)"
-else
-  echo "Committing..."
+if ! git diff --cached --quiet 2>/dev/null; then
   git -c user.email=notmattgraham@gmail.com -c user.name="Matt Graham" \
-      commit -m "Add Express backend, Google OAuth, Postgres, cloud-synced tasks + streaks"
+      commit -m "Wire up backend + auth" || true
 fi
 
-# Resolve the GitHub remote if we don't have one yet.
+# Set origin if missing
 if ! git remote get-url origin >/dev/null 2>&1; then
-  echo ""
-  echo "No origin remote configured. Trying to find your gofirst repo..."
-
-  FOUND=""
-  if command -v gh >/dev/null 2>&1; then
-    GH_USER=$(gh api user --jq .login 2>/dev/null)
-    if [ -n "$GH_USER" ]; then
-      for name in gofirst GoFirst GoFirstApp gofirst-app; do
-        if gh repo view "$GH_USER/$name" >/dev/null 2>&1; then
-          FOUND="https://github.com/$GH_USER/$name.git"
-          echo "  Found via gh CLI: $FOUND"
-          break
-        fi
-      done
-    fi
-  fi
-
-  if [ -z "$FOUND" ]; then
-    URL=$(osascript -e 'display dialog "Paste the GitHub URL for your gofirst repo (e.g. https://github.com/you/gofirst.git):" default answer "" with title "GoFirst push" with icon note' -e 'text returned of result' 2>/dev/null)
-    if [ -z "$URL" ]; then
-      echo "Aborted — no URL provided."
-      read -n 1 -p "Press any key to close..."
-      exit 1
-    fi
-    FOUND="$URL"
-  fi
-
-  git remote add origin "$FOUND"
+  git remote add origin https://github.com/notmattgraham/gofirst.git
+  echo "Added remote: $(git remote get-url origin)"
+else
+  CURRENT=$(git remote get-url origin)
+  echo "Origin already set: $CURRENT"
 fi
 
-echo ""
-echo "Remote: $(git remote get-url origin)"
 echo ""
 echo "Pushing to origin/main..."
 if git push -u origin main 2>&1; then
   echo ""
-  echo "✓ Pushed. Railway should pick it up in ~30s."
+  echo "✓ Pushed. Railway should redeploy in ~30s."
   osascript -e 'display notification "Pushed to GitHub. Railway will redeploy." with title "GoFirst"' 2>/dev/null
 else
   echo ""
-  echo "✗ Push failed. If it says auth is required, run 'gh auth login' in Terminal first, then re-run this script."
+  echo "✗ Push failed. Most common cause: auth."
+  echo "  Try running 'gh auth login' in Terminal, or check your SSH keys."
   osascript -e 'display dialog "Push failed — see Terminal for details." with title "GoFirst push" buttons {"OK"} with icon stop' 2>/dev/null
 fi
 
