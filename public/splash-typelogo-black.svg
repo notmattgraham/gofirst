@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="Layer_1" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 789.58 507.71">
+  <defs>
+    <style>
+      .cls-1, .cls-2 {
+        fill: #000;
+      }
+
+      .cls-3 {
+        letter-spacing: -.02em;
+      }
+
+      .cls-2 {
+        font-family: Industry-UltraItalic, Industry;
+        font-size: 196px;
+        font-style: italic;
+      }
+
+      .cls-4 {
+        letter-spacing: 0em;
+      }
+    </style>
+  </defs>
+  <polygon class="cls-1" points="31.98 253.93 166 253.93 236.53 84.64 102.51 84.64 31.98 253.93"/>
+  <polygon class="cls-1" points="203.6 253.93 337.62 253.93 408.15 84.64 274.13 84.64 203.6 253.93"/>
+  <polygon class="cls-1" points="377.78 254.59 511.8 254.59 582.34 85.3 448.32 85.3 377.78 254.59"/>
+  <polygon class="cls-1" points="585.02 169.29 719.04 169.29 789.58 0 655.56 0 585.02 169.29"/>
+  <text class="cls-2" transform="translate(0 434.8)"><tspan x="0" y="0">GOFIR</tspan><tspan class="cls-4" x="547.02" y="0">S</tspan><tspan class="cls-3" x="664.81" y="0">T</tspan></text>
+</svg>

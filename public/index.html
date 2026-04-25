@@ -1104,12 +1104,14 @@
   .splash[hidden] { display: none; }
 
   .splash-brand {
-    margin-bottom: 12px;
+    margin-bottom: 40px;
     display: flex;
     justify-content: center;
   }
   .splash-brand img {
-    height: 48px;
+    /* Type logo (mark + GOFIRST wordmark): taller than the chevron-only
+       header logo so the wordmark is readable. */
+    height: 96px;
     width: auto;
     display: block;
   }
@@ -1538,10 +1540,9 @@
     <!-- Sign-in splash (covers the app when signed out) -->
     <div class="splash" id="splash">
       <div class="splash-brand">
-        <img class="brand-dark" src="applogo.svg" alt="GoFirst" />
-        <img class="brand-light" src="applogo-black.svg" alt="GoFirst" />
+        <img class="brand-dark" src="splash-typelogo.svg" alt="GoFirst" />
+        <img class="brand-light" src="splash-typelogo-black.svg" alt="GoFirst" />
       </div>
-      <div class="splash-tag">Your tasks and streaks, synced across your devices.</div>
       <a class="btn-google" id="btn-google" href="/api/auth/google">
         <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
           <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.76h3.56c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -1813,6 +1814,14 @@ const Store = (() => {
     emit();
   }
 
+  // Best-effort post-action refresh: if it fails (network blip, server
+  // mid-restart, etc.) it must NOT cause the just-completed action to
+  // look like it failed. The action already succeeded server-side; we
+  // resync on the next visibilitychange / refresh.
+  async function safeLoad() {
+    try { await load(); } catch (e) { console.warn('background reload failed', e); }
+  }
+
   // If cloud is empty but localStorage has prior data (from before accounts
   // existed), one-shot upload it to the new account so daily usage is preserved.
   async function maybeImportLocal() {
@@ -1863,7 +1872,7 @@ const Store = (() => {
       // Back up and clear so import is one-shot
       localStorage.setItem(LEGACY_KEY + '.imported.' + Date.now(), raw);
       localStorage.removeItem(LEGACY_KEY);
-      await load();
+      await safeLoad();
       banner('Your data is synced');
     } catch (e) {
       console.warn('import failed', e);
@@ -1931,9 +1940,14 @@ const Store = (() => {
             trackStreak: optimistic.trackStreak,
             category: optimistic.category,
           });
-          // Server may also flip todayComplete / overrideActive on us; pull a fresh snapshot.
-          await load();
-          return (s) => s;
+          // Replace the optimistic temp-id row with the saved one (real id,
+          // server timestamps). Refresh derived state in the background — if
+          // the refresh fails we still keep the saved task locally.
+          safeLoad();
+          return (s) => ({
+            ...s,
+            tasks: s.tasks.map(x => x.id === optimistic.id ? task : x),
+          });
         }
       );
     },
@@ -1948,10 +1962,11 @@ const Store = (() => {
         (s) => ({ ...s, tasks: s.tasks.map(x => x.id === id ? { ...x, ...sanitized } : x) }),
         async () => {
           const { task } = await api('PATCH', `/api/tasks/${id}`, sanitized);
-          // Completion changes can flip todayComplete; reload the day snapshot.
+          // Completion changes can flip todayComplete; refresh the snapshot
+          // in the background so a transient load failure doesn't undo the
+          // check/uncheck the user just made.
           if (sanitized.done !== undefined || sanitized.completedDates !== undefined) {
-            await load();
-            return (s) => s;
+            safeLoad();
           }
           return (s) => ({ ...s, tasks: s.tasks.map(x => x.id === id ? task : x) });
         }
@@ -2025,26 +2040,29 @@ const Store = (() => {
 
     // Overrides + missed-task carry-over.
     async useOverride() {
+      let overrides;
       try {
-        const { overrides } = await api('POST', '/api/overrides/use');
-        state = { ...state, overrides, overrideActive: !!overrides.active };
-        emit();
-        // The lock state changes server-side; pull a fresh snapshot.
-        await load();
-        return { ok: true };
+        const result = await api('POST', '/api/overrides/use');
+        overrides = result.overrides;
       } catch (e) {
         return { ok: false, error: e && e.message };
       }
+      // Server confirmed; commit locally before attempting a refresh so a
+      // transient load failure doesn't roll back the visible override state.
+      state = { ...state, overrides, overrideActive: !!overrides.active };
+      emit();
+      await safeLoad();
+      return { ok: true };
     },
     async retryMissed(id) {
       try {
         await api('POST', `/api/tasks/missed/${id}/retry`);
-        await load();
-        return { ok: true };
       } catch (e) {
         banner('Could not re-add task', true);
         return { ok: false, error: e && e.message };
       }
+      await safeLoad();
+      return { ok: true };
     },
   };
 })();
