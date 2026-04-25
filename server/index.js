@@ -48,6 +48,7 @@ app.use('/api/auth', require('./routes/auth'));
 app.use('/api/tasks', require('./routes/tasks'));
 app.use('/api/streaks', require('./routes/streaks'));
 app.use('/api/overrides', require('./routes/overrides'));
+app.use('/api/admin', require('./routes/admin'));
 
 // Static assets — the SPA lives in /public.
 const publicDir = path.join(__dirname, '..', 'public');
@@ -59,6 +60,14 @@ app.use(express.static(publicDir, {
     }
   },
 }));
+
+// Hidden admin dashboard. Served as a separate page so it never appears in the
+// main SPA bundle. The page itself calls /api/admin/me to confirm the user is
+// the allow-listed admin; non-admin sessions just see a 404-style screen.
+app.get(['/admin', '/admin/'], (_req, res) => {
+  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+  res.sendFile(path.join(publicDir, 'admin.html'));
+});
 
 // SPA fallback for any non-API route.
 app.get(/^\/(?!api\/).*/, (_req, res) => {

@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#0f1115" />
+<meta name="robots" content="noindex,nofollow" />
+<title>GoFirst</title>
+<style>
+  :root {
+    --bg: #0f1115;
+    --bg-elev: #171a21;
+    --surface: #1c2029;
+    --surface-2: #242834;
+    --border: #2a2f3a;
+    --text: #e7e9ee;
+    --text-dim: #8a909c;
+    --text-faint: #5a5f6a;
+    --accent: #ffffff;
+    --accent-hover: #d4d7dd;
+    --accent-dim: rgba(255, 255, 255, 0.10);
+    --accent-fg: #0f1115;
+    --danger: #ef4444;
+    --success: #10b981;
+    --warn: #f59e0b;
+    --radius: 14px;
+    --radius-lg: 18px;
+  }
+  @media (prefers-color-scheme: light) {
+    :root:not([data-theme="dark"]) {
+      --bg: #f4f6fa;
+      --bg-elev: #ffffff;
+      --surface: #ffffff;
+      --surface-2: #f0f2f7;
+      --border: #e4e7ee;
+      --text: #1a1d25;
+      --text-dim: #6b7280;
+      --text-faint: #9ca3af;
+      --accent: #1a1d25;
+      --accent-hover: #000000;
+      --accent-dim: rgba(26, 29, 37, 0.08);
+      --accent-fg: #ffffff;
+      --danger: #dc2626;
+      --success: #059669;
+      --warn: #d97706;
+    }
+  }
+
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    font-size: 15px;
+    line-height: 1.45;
+  }
+  a { color: inherit; }
+
+  .wrap {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 28px 22px 80px;
+  }
+
+  /* --- Header ----------------------------------------------- */
+  .head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 22px;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .head h1 {
+    font-size: 22px;
+    margin: 0;
+    letter-spacing: -0.01em;
+  }
+  .head .sub {
+    font-size: 13px;
+    color: var(--text-dim);
+    margin-top: 4px;
+  }
+  .head .who {
+    font-size: 13px;
+    color: var(--text-dim);
+    text-align: right;
+  }
+  .head .who b { color: var(--text); font-weight: 600; }
+
+  /* --- Cards / sections ------------------------------------- */
+  .section-title {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.10em;
+    color: var(--text-dim);
+    margin: 28px 4px 10px;
+  }
+  .section-title:first-child { margin-top: 6px; }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+  }
+  .card + .card { margin-top: 12px; }
+
+  /* --- Stat grid -------------------------------------------- */
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 10px;
+  }
+  .stat {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+  }
+  .stat .label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-dim);
+    font-weight: 600;
+  }
+  .stat .num {
+    margin-top: 6px;
+    font-size: 26px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+  }
+  .stat .delta {
+    font-size: 12px;
+    color: var(--text-faint);
+    margin-top: 2px;
+  }
+
+  /* --- Users table ------------------------------------------ */
+  .table-wrap {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+  th, td {
+    text-align: left;
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: middle;
+  }
+  thead th {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-dim);
+    font-weight: 600;
+    background: var(--surface-2);
+    border-bottom: 1px solid var(--border);
+  }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr:hover { background: var(--accent-dim); }
+  td.num { text-align: right; font-variant-numeric: tabular-nums; }
+  th.num { text-align: right; }
+  .user-cell { display: flex; align-items: center; gap: 10px; }
+  .avatar {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    background: var(--surface-2);
+    color: var(--text-dim);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 12px;
+    flex-shrink: 0;
+    overflow: hidden;
+  }
+  .avatar img { width: 100%; height: 100%; object-fit: cover; }
+  .user-cell .name { font-weight: 600; }
+  .user-cell .email { font-size: 12px; color: var(--text-dim); }
+
+  .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 600;
+    background: var(--surface-2);
+    color: var(--text-dim);
+    border: 1px solid var(--border);
+  }
+  .badge.coach {
+    background: var(--accent-dim);
+    color: var(--text);
+    border-color: transparent;
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 28px;
+    padding: 0 12px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: var(--surface-2);
+    color: var(--text);
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.12s ease;
+  }
+  .btn:hover { background: var(--accent-dim); }
+  .btn.primary {
+    background: var(--accent);
+    color: var(--accent-fg);
+    border-color: transparent;
+  }
+  .btn.primary:hover { background: var(--accent-hover); }
+  .btn.danger {
+    color: var(--danger);
+    border-color: rgba(239,68,68,0.3);
+  }
+  .btn:disabled { opacity: 0.5; cursor: default; }
+
+  .filter-row {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    margin: 0 0 10px;
+  }
+  .filter-row input {
+    flex: 1;
+    height: 36px;
+    padding: 0 12px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+    border-radius: 10px;
+    font-size: 14px;
+    font-family: inherit;
+  }
+  .filter-row input:focus {
+    outline: none;
+    border-color: var(--accent);
+  }
+
+  /* --- Coaching clients ------------------------------------- */
+  .client-card { padding: 0; overflow: hidden; }
+  .client-head {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    background: var(--surface-2);
+    border-bottom: 1px solid var(--border);
+  }
+  .client-head .avatar { width: 36px; height: 36px; font-size: 14px; }
+  .client-head .meta { flex: 1; min-width: 0; }
+  .client-head .meta .name { font-weight: 700; font-size: 15px; }
+  .client-head .meta .email { font-size: 12px; color: var(--text-dim); }
+  .client-body { padding: 14px 16px; }
+
+  .client-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+  .client-stats .stat { padding: 10px 12px; }
+  .client-stats .stat .num { font-size: 18px; }
+
+  .cat-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 6px;
+    margin-bottom: 14px;
+  }
+  .cat-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+  }
+  .cat-row .label { width: 130px; color: var(--text-dim); flex-shrink: 0; }
+  .cat-row .bar {
+    flex: 1;
+    height: 6px;
+    background: var(--surface-2);
+    border-radius: 999px;
+    overflow: hidden;
+  }
+  .cat-row .bar > div {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 999px;
+  }
+  .cat-row .pct { width: 70px; text-align: right; font-variant-numeric: tabular-nums; color: var(--text-dim); }
+
+  .task-list { list-style: none; padding: 0; margin: 0; }
+  .task-list li {
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .task-list li:last-child { border-bottom: none; }
+  .task-list .text { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .task-list .meta { color: var(--text-dim); font-size: 12px; flex-shrink: 0; }
+  .task-list .recur { font-size: 11px; padding: 1px 6px; border-radius: 4px; background: var(--surface-2); color: var(--text-dim); }
+
+  /* --- Loading / empty / error ------------------------------ */
+  .center {
+    text-align: center;
+    color: var(--text-dim);
+    padding: 28px 12px;
+    font-size: 13px;
+  }
+  .four-oh-four {
+    text-align: center;
+    margin-top: 18vh;
+    color: var(--text-dim);
+  }
+  .four-oh-four h1 {
+    font-size: 64px;
+    margin: 0;
+    color: var(--text);
+    letter-spacing: -0.04em;
+  }
+  .four-oh-four p { margin-top: 6px; font-size: 14px; }
+  .four-oh-four a { color: var(--text-dim); text-decoration: underline; }
+
+  /* --- Responsive ------------------------------------------- */
+  @media (max-width: 720px) {
+    .wrap { padding: 18px 14px 60px; }
+    .head h1 { font-size: 20px; }
+    th.hide-sm, td.hide-sm { display: none; }
+  }
+</style>
+</head>
+<body>
+  <div id="loading" class="center">Loading…</div>
+  <div id="not-found" class="four-oh-four" hidden>
+    <h1>404</h1>
+    <p>This page doesn't exist.</p>
+    <p><a href="/">Go home</a></p>
+  </div>
+
+  <div id="app" class="wrap" hidden>
+    <div class="head">
+      <div>
+        <h1>GoFirst — Developer dashboard</h1>
+        <div class="sub">Backend metrics, all users, and coaching clients.</div>
+      </div>
+      <div class="who">
+        Signed in as <b id="me-email">—</b><br/>
+        <span id="server-date"></span>
+      </div>
+    </div>
+
+    <div class="section-title">App-wide stats</div>
+    <div id="stats" class="stats"></div>
+
+    <div class="section-title">Coaching clients</div>
+    <div id="clients-empty" class="card center" hidden>
+      No coaching clients yet. Mark someone as <b>Coach</b> in the users table below.
+    </div>
+    <div id="clients"></div>
+
+    <div class="section-title">All users</div>
+    <div class="filter-row">
+      <input id="user-filter" type="search" placeholder="Search by name or email…" autocomplete="off" />
+      <span id="user-count" class="badge">—</span>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>User</th>
+            <th class="hide-sm">Joined</th>
+            <th class="hide-sm">Last active</th>
+            <th class="num">Tasks</th>
+            <th class="num hide-sm">Streaks</th>
+            <th class="num">Exec %</th>
+            <th class="num hide-sm">Overrides</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="users-body">
+          <tr><td colspan="8" class="center">Loading users…</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+<script>
+(() => {
+  const $ = (id) => document.getElementById(id);
+  const fmt = {
+    int: (n) => (n == null ? '—' : Number(n).toLocaleString()),
+    pct: (r) => (r == null ? '—' : Math.round(r * 100) + '%'),
+    date: (s) => {
+      if (!s) return '—';
+      const d = new Date(s);
+      if (Number.isNaN(d.getTime())) return '—';
+      return d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+    },
+    relTime: (s) => {
+      if (!s) return 'never';
+      const d = new Date(s);
+      if (Number.isNaN(d.getTime())) return '—';
+      const diff = Date.now() - d.getTime();
+      const min = Math.round(diff / 60000);
+      if (min < 1) return 'just now';
+      if (min < 60) return min + 'm ago';
+      const hrs = Math.round(min / 60);
+      if (hrs < 24) return hrs + 'h ago';
+      const days = Math.round(hrs / 24);
+      if (days < 30) return days + 'd ago';
+      return fmt.date(s);
+    },
+  };
+
+  const escapeHtml = (s) => String(s == null ? '' : s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+
+  const initials = (name, email) => {
+    const src = (name || email || '?').trim();
+    const parts = src.split(/\s+/).filter(Boolean);
+    if (!parts.length) return '?';
+    if (parts.length === 1) return parts[0][0].toUpperCase();
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  };
+
+  const avatarHtml = (u) => u.picture
+    ? `<span class="avatar"><img src="${escapeHtml(u.picture)}" alt=""/></span>`
+    : `<span class="avatar">${escapeHtml(initials(u.name, u.email))}</span>`;
+
+  // Auth gate: hit /api/admin/me. 404 (or anything else) => 404 page.
+  async function gate() {
+    let me;
+    try {
+      const r = await fetch('/api/admin/me', { credentials: 'same-origin' });
+      if (!r.ok) throw new Error('not admin');
+      me = await r.json();
+    } catch (_e) {
+      $('loading').hidden = true;
+      $('not-found').hidden = false;
+      return null;
+    }
+    return me;
+  }
+
+  async function loadAll() {
+    const me = await gate();
+    if (!me) return;
+    $('me-email').textContent = me.email || '—';
+    $('loading').hidden = true;
+    $('app').hidden = false;
+
+    // Load stats, users, and coaching clients in parallel.
+    const [stats, users, clients] = await Promise.all([
+      fetch('/api/admin/stats', { credentials: 'same-origin' }).then(r => r.json()).catch(() => null),
+      fetch('/api/admin/users', { credentials: 'same-origin' }).then(r => r.json()).catch(() => ({ users: [] })),
+      fetch('/api/admin/coaching-clients', { credentials: 'same-origin' }).then(r => r.json()).catch(() => ({ clients: [] })),
+    ]);
+
+    if (stats) renderStats(stats);
+    renderUsers(users.users || []);
+    renderClients(clients.clients || []);
+  }
+
+  function renderStats(s) {
+    const el = $('stats');
+    if (s.serverDate) $('server-date').textContent = 'Server date: ' + s.serverDate;
+    const cards = [
+      { label: 'Total users', num: fmt.int(s.users.total), delta: `+${fmt.int(s.users.newLast7Days)} last 7d / +${fmt.int(s.users.newLast30Days)} last 30d` },
+      { label: 'Active (7d)', num: fmt.int(s.users.activeLast7Days), delta: `out of ${fmt.int(s.users.total)} total` },
+      { label: 'Total tasks', num: fmt.int(s.tasks.total), delta: '' },
+      { label: 'One-shot completions', num: fmt.int(s.tasks.oneShotCompletions), delta: '' },
+      { label: 'Recurring completions', num: fmt.int(s.tasks.recurringCompletions), delta: '' },
+      { label: 'Streaks tracked', num: fmt.int(s.streaks.total), delta: '' },
+      { label: 'Overrides used', num: fmt.int(s.overrides.totalUsed), delta: 'across all users' },
+    ];
+    el.innerHTML = cards.map(c => `
+      <div class="stat">
+        <div class="label">${escapeHtml(c.label)}</div>
+        <div class="num">${c.num}</div>
+        ${c.delta ? `<div class="delta">${escapeHtml(c.delta)}</div>` : ''}
+      </div>
+    `).join('');
+  }
+
+  // --- Users table -----------------------------------------------------
+  let allUsers = [];
+
+  function renderUsers(users) {
+    allUsers = users;
+    $('user-count').textContent = users.length + ' users';
+    applyUserFilter();
+  }
+
+  function applyUserFilter() {
+    const q = ($('user-filter').value || '').trim().toLowerCase();
+    const rows = q
+      ? allUsers.filter(u =>
+          (u.email || '').toLowerCase().includes(q) ||
+          (u.name || '').toLowerCase().includes(q))
+      : allUsers;
+
+    const body = $('users-body');
+    if (!rows.length) {
+      body.innerHTML = `<tr><td colspan="8" class="center">No users match.</td></tr>`;
+      return;
+    }
+    body.innerHTML = rows.map(u => `
+      <tr data-id="${escapeHtml(u.id)}">
+        <td>
+          <div class="user-cell">
+            ${avatarHtml(u)}
+            <div>
+              <div class="name">${escapeHtml(u.name || '—')} ${u.coachingClient ? '<span class="badge coach">Coach</span>' : ''}</div>
+              <div class="email">${escapeHtml(u.email || '')}</div>
+            </div>
+          </div>
+        </td>
+        <td class="hide-sm">${fmt.date(u.createdAt)}</td>
+        <td class="hide-sm">${escapeHtml(fmt.relTime(u.lastActivityAt))}</td>
+        <td class="num">${fmt.int(u.taskCount)}</td>
+        <td class="num hide-sm">${fmt.int(u.streakCount)}</td>
+        <td class="num">${fmt.pct(u.executionRate)}</td>
+        <td class="num hide-sm">${fmt.int(u.overridesUsed)}</td>
+        <td>
+          <button class="btn ${u.coachingClient ? 'danger' : 'primary'}" data-coach data-id="${escapeHtml(u.id)}" data-on="${u.coachingClient ? '1' : '0'}">
+            ${u.coachingClient ? 'Unmark' : 'Coach'}
+          </button>
+        </td>
+      </tr>
+    `).join('');
+  }
+
+  $('user-filter').addEventListener('input', applyUserFilter);
+
+  // Click handler for the coach toggle. Optimistic-ish: disable the button
+  // while the request runs, then refresh both the users table and the
+  // coaching clients section.
+  $('users-body').addEventListener('click', async (e) => {
+    const btn = e.target.closest('[data-coach]');
+    if (!btn) return;
+    const id = btn.dataset.id;
+    const on = btn.dataset.on === '1';
+    btn.disabled = true;
+    btn.textContent = on ? 'Removing…' : 'Adding…';
+    try {
+      const r = await fetch(`/api/admin/users/${encodeURIComponent(id)}/coaching`, {
+        method: 'PATCH',
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ coachingClient: !on }),
+      });
+      if (!r.ok) throw new Error('bad status ' + r.status);
+      // Update in-memory state and refresh the affected sections.
+      const u = allUsers.find(x => x.id === id);
+      if (u) u.coachingClient = !on;
+      applyUserFilter();
+      reloadClients();
+    } catch (err) {
+      btn.disabled = false;
+      btn.textContent = on ? 'Unmark' : 'Coach';
+      alert('Could not update coaching status. ' + err.message);
+    }
+  });
+
+  // --- Coaching clients ------------------------------------------------
+  async function reloadClients() {
+    try {
+      const r = await fetch('/api/admin/coaching-clients', { credentials: 'same-origin' });
+      const data = await r.json();
+      renderClients(data.clients || []);
+    } catch (_e) { /* no-op */ }
+  }
+
+  function renderClients(list) {
+    const root = $('clients');
+    const empty = $('clients-empty');
+    if (!list.length) {
+      root.innerHTML = '';
+      empty.hidden = false;
+      return;
+    }
+    empty.hidden = true;
+    root.innerHTML = list.map(renderClient).join('');
+  }
+
+  function renderClient(c) {
+    const u = c.user;
+    const s = c.summary || {};
+    const cats = s.byCategory || {};
+    const catKeys = Object.keys(cats).sort();
+    // Find max scheduled count so the bars are scaled relatively.
+    const maxScheduled = Math.max(1, ...catKeys.map(k => cats[k].scheduled || 0));
+
+    const catRows = catKeys.length
+      ? catKeys.map(k => {
+          const v = cats[k];
+          const pct = v.scheduled > 0 ? (v.completed / v.scheduled) : null;
+          const w = v.scheduled / maxScheduled * 100;
+          return `
+            <div class="cat-row">
+              <div class="label">${escapeHtml(k)}</div>
+              <div class="bar"><div style="width:${w.toFixed(1)}%"></div></div>
+              <div class="pct">${v.completed}/${v.scheduled} · ${fmt.pct(pct)}</div>
+            </div>`;
+        }).join('')
+      : '<div class="center" style="padding:8px 0">No categorized tasks yet.</div>';
+
+    // Show up to 8 most-recently-updated tasks for a quick read.
+    const tasks = (c.tasks || []).slice(0, 8);
+    const taskHtml = tasks.length
+      ? tasks.map(t => {
+          const recurLabel = t.recurrence
+            ? (t.recurrence.type || 'recurring')
+            : (t.done ? 'done' : 'open');
+          const meta = t.recurrence
+            ? `${(t.completedDates || []).length} done`
+            : (t.scheduledDate || fmt.date(t.createdAt));
+          return `
+            <li>
+              <span class="recur">${escapeHtml(recurLabel)}</span>
+              <span class="text">${escapeHtml(t.text)}</span>
+              <span class="meta">${escapeHtml(meta)}</span>
+            </li>`;
+        }).join('')
+      : '<li><span class="text" style="color:var(--text-dim)">No tasks yet.</span></li>';
+
+    return `
+      <div class="card client-card" style="margin-bottom:12px">
+        <div class="client-head">
+          ${avatarHtml(u)}
+          <div class="meta">
+            <div class="name">${escapeHtml(u.name || u.email)}</div>
+            <div class="email">${escapeHtml(u.email)} · joined ${fmt.date(u.createdAt)} · ${escapeHtml(u.timezone || 'no tz')}</div>
+          </div>
+          <button class="btn danger" data-coach data-id="${escapeHtml(u.id)}" data-on="1">Unmark</button>
+        </div>
+        <div class="client-body">
+          <div class="client-stats">
+            <div class="stat"><div class="label">Tasks</div><div class="num">${fmt.int(s.totalTasks)}</div></div>
+            <div class="stat"><div class="label">Recurring</div><div class="num">${fmt.int(s.recurringCount)}</div></div>
+            <div class="stat"><div class="label">One-shots</div><div class="num">${fmt.int(s.oneShotCount)}</div></div>
+            <div class="stat"><div class="label">Exec rate</div><div class="num">${fmt.pct(s.executionRate)}</div></div>
+            <div class="stat"><div class="label">Streaks</div><div class="num">${fmt.int((c.streaks || []).length)}</div></div>
+          </div>
+          <div class="cat-grid">${catRows}</div>
+          <div style="font-size:11px;text-transform:uppercase;letter-spacing:0.08em;color:var(--text-dim);font-weight:600;margin:6px 0">Recent tasks</div>
+          <ul class="task-list">${taskHtml}</ul>
+        </div>
+      </div>
+    `;
+  }
+
+  // Wire the unmark buttons inside client cards too — they share the
+  // same data-coach attribute as the table buttons.
+  $('clients').addEventListener('click', async (e) => {
+    const btn = e.target.closest('[data-coach]');
+    if (!btn) return;
+    const id = btn.dataset.id;
+    btn.disabled = true;
+    btn.textContent = 'Removing…';
+    try {
+      const r = await fetch(`/api/admin/users/${encodeURIComponent(id)}/coaching`, {
+        method: 'PATCH',
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ coachingClient: false }),
+      });
+      if (!r.ok) throw new Error('bad status ' + r.status);
+      const u = allUsers.find(x => x.id === id);
+      if (u) u.coachingClient = false;
+      applyUserFilter();
+      reloadClients();
+    } catch (err) {
+      btn.disabled = false;
+      btn.textContent = 'Unmark';
+      alert('Could not update coaching status. ' + err.message);
+    }
+  });
+
+  loadAll();
+})();
+</script>
+</body>
+</html>
