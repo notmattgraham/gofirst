@@ -6,6 +6,19 @@ const session = require('express-session');
 const PgSession = require('connect-pg-simple')(session);
 const passport = require('./auth');
 
+// Keep the Node process alive on unhandled async errors. Express 4 doesn't
+// catch errors thrown inside async route handlers; without these listeners
+// any such error becomes an unhandledRejection which crashes the dyno on
+// modern Node. The Express error handler at the bottom of this file still
+// returns a 500 for everything that DOES go through next(err); these
+// listeners are the safety net for the cases that don't.
+process.on('unhandledRejection', (reason) => {
+  console.error('[unhandledRejection]', reason);
+});
+process.on('uncaughtException', (err) => {
+  console.error('[uncaughtException]', err);
+});
+
 const app = express();
 
 // Railway sits behind a proxy. Needed so `secure` cookies + `req.secure` work.

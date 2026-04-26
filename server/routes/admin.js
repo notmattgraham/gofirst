@@ -10,6 +10,11 @@ const { dateInTz } = require('../time');
 
 const ADMIN_EMAIL = (process.env.ADMIN_EMAIL || 'notmattgraham@gmail.com').toLowerCase();
 
+// Wrap async handlers so any thrown error reaches Express's error middleware
+// (returning a 500) instead of becoming an unhandledRejection that crashes
+// the dyno. Every async handler in this file MUST go through this.
+const wrap = (fn) => (req, res, next) => Promise.resolve(fn(req, res, next)).catch(next);
+
 const router = express.Router();
 router.use(requireAuth);
 
@@ -86,13 +91,17 @@ function summarizeTasks(tasks) {
 }
 
 // GET /api/admin/stats — aggregate numbers for the whole app.
-router.get('/stats', async (_req, res) => {
+router.get('/stats', wrap(async (_req, res) => {
   const now = new Date();
   const day = 24 * 60 * 60 * 1000;
   const sevenDaysAgo = new Date(now.getTime() - 7 * day);
   const thirtyDaysAgo = new Date(now.getTime() - 30 * day);
 
-  const [userCount, taskCount, streakCount, newUsers7, newUsers30, activeUsers7, doneOneShots, recurringTasks] = await Promise.all([
+  // Fetch every task's recurrence + completedDates and partition in JS.
+  // Prisma 5 rejects `{ recurrence: { not: null } }` for Json? fields — the
+  // proper API is Prisma.DbNull, but partitioning client-side keeps the
+  // route portable across Prisma versions and avoids a sneaky 500 here.
+  const [userCount, taskCount, streakCount, newUsers7, newUsers30, activeUsers7, doneOneShots, allRecurrenceRows] = await Promise.all([
     prisma.user.count(),
     prisma.task.count(),
     prisma.quitStreak.count(),
@@ -105,13 +114,13 @@ router.get('/stats', async (_req, res) => {
       distinct: ['userId'],
     }),
     prisma.task.count({ where: { recurrence: null, done: true } }),
-    prisma.task.findMany({
-      where: { recurrence: { not: null } },
-      select: { completedDates: true },
-    }),
+    prisma.task.findMany({ select: { recurrence: true, completedDates: true } }),
   ]);
 
-  const recurringCompletions = recurringTasks.reduce((acc, t) => acc + (t.completedDates || []).length, 0);
+  const recurringCompletions = allRecurrenceRows.reduce(
+    (acc, t) => acc + (t.recurrence ? (t.completedDates || []).length : 0),
+    0,
+  );
 
   // Override usage across all users — small table, fine to load.
   const usersForOverrides = await prisma.user.findMany({
@@ -139,10 +148,10 @@ router.get('/stats', async (_req, res) => {
     },
     serverDate: dateInTz(now, 'UTC'),
   });
-});
+}));
 
 // GET /api/admin/users — list every user with light per-user rollups.
-router.get('/users', async (_req, res) => {
+router.get('/users', wrap(async (_req, res) => {
   const users = await prisma.user.findMany({
     orderBy: { createdAt: 'desc' },
     include: {
@@ -181,11 +190,11 @@ router.get('/users', async (_req, res) => {
   });
 
   res.json({ users: rows });
-});
+}));
 
 // PATCH /api/admin/users/:id/coaching — toggle coachingClient for a user.
 // Body: { coachingClient: boolean }
-router.patch('/users/:id/coaching', async (req, res) => {
+router.patch('/users/:id/coaching', wrap(async (req, res) => {
   const { coachingClient } = req.body || {};
   if (typeof coachingClient !== 'boolean') {
     return res.status(400).json({ error: 'coachingClient_required' });
@@ -201,12 +210,12 @@ router.patch('/users/:id/coaching', async (req, res) => {
     if (e && e.code === 'P2025') return res.status(404).json({ error: 'not_found' });
     throw e;
   }
-});
+}));
 
 // GET /api/admin/coaching-clients — every flagged client with full drill-down.
 // One bundled call so the dashboard can render the coaching section without
 // firing off a per-client request for each one.
-router.get('/coaching-clients', async (_req, res) => {
+router.get('/coaching-clients', wrap(async (_req, res) => {
   const clients = await prisma.user.findMany({
     where: { coachingClient: true },
     orderBy: { createdAt: 'desc' },
@@ -255,10 +264,10 @@ router.get('/coaching-clients', async (_req, res) => {
   });
 
   res.json({ clients: payload });
-});
+}));
 
 // GET /api/admin/users/:id — full per-user picture: tasks, streaks, analytics.
-router.get('/users/:id', async (req, res) => {
+router.get('/users/:id', wrap(async (req, res) => {
   const user = await prisma.user.findUnique({
     where: { id: req.params.id },
     include: {
@@ -305,6 +314,6 @@ router.get('/users/:id', async (req, res) => {
       createdAt: s.createdAt,
     })),
   });
-});
+}));
 
 module.exports = router;
