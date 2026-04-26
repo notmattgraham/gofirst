@@ -22,7 +22,6 @@ function shape(u) {
     timezone: u.timezone,
     overridesUsed: u.overridesUsed,
     overrideActiveDate: u.overrideActiveDate,
-    isDev: u.email === 'mattgraham15@gmail.com',
   };
 }
 
