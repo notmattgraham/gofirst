@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="GoFirst" />
 <link rel="manifest" href="manifest.json" />
 <link rel="apple-touch-icon" href="apple-touch-icon.png" />
-<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png" />
+<link rel="icon" type="image/png" sizes="192x192" href="icon-92.png" />
 <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png" />
 <title>GoFirst</title>
 <style>
@@ -2369,10 +2369,9 @@ function renderStatStrip(state) {
 let selectedDay = 'today';
 
 // True if the user can mutate (add/edit/delete) tasks for the given day right now.
+// Day-lock is suspended until the app is stable — always editable.
 function canEditDay(state, dayKey) {
-  if (dayKey === 'today') return state.overrideActive;
-  if (dayKey === 'tomorrow') return state.todayComplete;
-  return false;
+  return true;
 }
 
 // Pick which date string a task is scheduled for, given the current state.
@@ -2406,6 +2405,9 @@ function renderDayToggle(state) {
 function renderLockBanner(state) {
   const banner = document.getElementById('lock-banner');
   if (!banner) return;
+  // Day-lock suspended — banner hidden until locking is re-enabled.
+  banner.hidden = true;
+  if (false) {
   let icon = lockIcon, msg = '';
   if (selectedDay === 'today') {
     if (state.overrideActive) {
@@ -2437,6 +2439,7 @@ function renderLockBanner(state) {
   }
   banner.innerHTML = `${icon}<span>${msg}</span>`;
   banner.hidden = false;
+  } // end if (false) — lock banner disabled
 }
 
 function renderTasksView(state) {
